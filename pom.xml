@@ -207,7 +207,6 @@
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
-
                         <manifestEntries>
                             <Built-By>Yetamine</Built-By>
                             <Main-Class>net.yetamine.pet4bnd.Main</Main-Class>
@@ -219,14 +218,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>mojo-help-goal</id>
-                        <goals>
-                            <goal>helpmojo</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
@@ -266,10 +257,6 @@
             -->
 
             <id>preview</id>
-
-            <properties>
-                <source.includeSrc>false</source.includeSrc>
-            </properties>
 
             <build>
                 <plugins>

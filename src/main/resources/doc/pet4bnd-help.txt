@@ -1,0 +1,27 @@
+Syntax:
+HELP | OPTIONS
+
+Using a HELP option causes printing this help and the program terminates with 
+the SUCCESS exit code. The HELP options are case insensitive and any of these
+may appear: help, -help, --help, -h, -?, /h, /?
+
+Using any of the other OPTIONS performs the actions according to the OPTIONS. At
+least one argument is always required. Following OPTIONS may appear:
+
+-bundle-version     Print the target bundle version to STDOUT
+-debug              Print debugging information on an error
+-pet FILE           Use the specified source FILE ('./exports.pet' is default)
+-bnd FILE           Render the specified .bnd FILE
+-properties FILE    Render the specified .properties FILE
+-restore            Restore the baseline versions in the source file
+-verbose            Print all details
+
+The -properties option renders either classical Java properties file, or if the
+FILE argument has the '.xml' extension, an XML properties file is created then.
+
+All output, except for the result of the -bundle-version option, is printed to
+STDERR; therefore STDOUT always provides just the target bundle version, which
+usually is the most important output of this tool for scripting purposes.
+
+All the OPTIONS listed above may be used together. If an option appears more
+than once, the latest occurrence of the option prevails.

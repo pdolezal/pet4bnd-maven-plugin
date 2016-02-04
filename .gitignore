@@ -5,3 +5,6 @@
 /.settings/
 /.classpath
 /.project
+
+# Ignore demo artifacts
+/usage/bin/
