@@ -103,11 +103,11 @@ public final class PackageExport {
     /**
      * Returns the version variance.
      *
-     * @return the version variance, or {@link VersionVariance#NONE} if not
-     *         present
+     * @return the version variance, or an empty container if the version is not
+     *         managed automatically
      */
-    public VersionVariance versionVariance() {
-        return versionVariance.use().orElse(VersionVariance.NONE);
+    public Optional<VersionVariance> versionVariance() {
+        return versionVariance.use();
     }
 
     /**

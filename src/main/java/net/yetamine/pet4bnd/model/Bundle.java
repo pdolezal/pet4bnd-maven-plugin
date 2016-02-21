@@ -45,7 +45,7 @@ public class Bundle {
         boolean varianceViolation = false;
         VersionVariance bundleVariance = VersionVariance.NONE;
         for (PackageExport export : exports.values()) {
-            final VersionVariance variance = export.versionVariance();
+            final VersionVariance variance = export.versionVariance().orElse(VersionVariance.NONE);
             if (bundleVariance.compareTo(variance) < 0) { // Record the largest one
                 bundleVariance = variance;
             }
@@ -99,15 +99,17 @@ public class Bundle {
         }
 
         for (PackageExport export : exports.values()) {
-            final Version version = export.versionVariance().apply(export.versionBaseline());
+            final Optional<VersionVariance> variance = export.versionVariance();
+            final Version version = variance.orElse(VersionVariance.NONE).apply(export.versionBaseline());
             final Optional<Version> constraint = export.versionConstraint();
             if (constraint.map(v -> v.compareTo(version) <= 0).orElse(false)) {
                 throw new IllegalStateException();
             }
 
-            // Reset the package version to the new baseline
-            export.versionVariance(VersionVariance.NONE);
-            export.versionBaseline(version);
+            variance.ifPresent(v -> {
+                export.versionVariance(VersionVariance.NONE);
+                export.versionBaseline(version);
+            });
         }
 
         options.versionBaseline(bundleVersion);
