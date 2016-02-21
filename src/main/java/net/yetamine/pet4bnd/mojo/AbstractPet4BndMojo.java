@@ -77,6 +77,27 @@ public abstract class AbstractPet4BndMojo extends AbstractMojo {
     }
 
     /**
+     * Makes a {@link Path} instance from the given path string.
+     *
+     * @param path
+     *            the path to convert. It must not be {@code null}.
+     *
+     * @return the {@link Path} instance
+     *
+     * @throws MojoExecutionException
+     *             if the path is invalid or missing
+     */
+    protected static Path requirePath(String path) throws MojoExecutionException {
+        try {
+            return Optional.ofNullable(path).map(Paths::get).orElseThrow(() -> {
+                return new MojoExecutionException("Path missing.");
+            });
+        } catch (IllegalArgumentException e) {
+            throw new MojoExecutionException(String.format("Invalid path specified: %s", path), e);
+        }
+    }
+
+    /**
      * Provides the feedback callback that uses the Mojo's log.
      *
      * @return the feedback callback

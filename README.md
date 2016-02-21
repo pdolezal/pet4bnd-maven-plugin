@@ -114,12 +114,12 @@ The tool can be used as a Maven plugin, which is described below, or as a standa
 
 ### Generating the exports as a properties file: `export` ###
 
-This goal generates a properties file with similar content that `generate` would produce, so that it can be integrated with tools like *Ant* easily. The default file format is the classical Java properties, however, when the file name has the *.xml* extension, the content is stored as an XML. The name of the file can be configured via the `pet4bnd.export` property (default: `${project.build.directory}/exports.properties`).
+This goal generates a properties file with similar content that `generate` would produce, so that it can be integrated with tools like *Ant* easily. The default file format is the classical Java properties, however, when the file name has the *.xml* extension, the content is stored as an XML. The name of the file can be configured via the `pet4bnd.export` property. If the property is empty or missing, nothing is produced.
 
 
 ### Generating the exports for the *bnd*: `generate` ###
 
-This goal generates the *.bnd* file that the *bnd* can use for making the complete manifest. The demonstration above shows how to configure and use the plugin for this goal.
+This goal generates the *.bnd* file that the *bnd* can use for making the complete manifest. The demonstration above shows how to configure and use the plugin for this goal.  If the output property `pet4bnd.output` is empty or missing, nothing is produced.
 
 
 ### Fixing the POM version for snapshots: `refresh` ###

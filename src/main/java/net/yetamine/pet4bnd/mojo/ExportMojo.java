@@ -2,10 +2,6 @@ package net.yetamine.pet4bnd.mojo;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import net.yetamine.pet4bnd.format.Format2Map;
-import net.yetamine.pet4bnd.model.Description;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -13,19 +9,22 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import net.yetamine.pet4bnd.format.Format2Map;
+import net.yetamine.pet4bnd.model.Description;
+
 /**
  * Dumps the version information of the definition elements.
  */
 @Mojo(name = "export", defaultPhase = LifecyclePhase.VALIDATE)
 public final class ExportMojo extends AbstractPet4BndMojo {
 
+    /** Location of the target file if specified. */
+    @Parameter(property = "pet4bnd.export", required = false)
+    private String export;
+
     /** Location of the source file. */
     @Parameter(defaultValue = "${pet4bnd.source}", property = "pet4bnd.source", required = false)
     private String source;
-
-    /** Location of the target file if specified. */
-    @Parameter(defaultValue = "${pet4bnd.export}", property = "pet4bnd.export", required = false)
-    private String export;
 
     /** Requiring to be verbose. */
     @Parameter(defaultValue = "${pet4bnd.verbose}", property = "pet4bnd.verbose", required = false)
@@ -35,10 +34,16 @@ public final class ExportMojo extends AbstractPet4BndMojo {
      * @see org.apache.maven.plugin.Mojo#execute()
      */
     public void execute() throws MojoExecutionException {
-        final Path sourcePath = resolvePath(source).orElseGet(this::getDefaultSourcePath);
-        final Path outputPath = resolvePath(export).orElseGet(this::getDefaultOutputPath);
-
         final Log log = getLog();
+
+        if ((export == null) || export.isEmpty()) {
+            log.info("No output file specified, nothing will be generated.");
+            return;
+        }
+
+        final Path outputPath = requirePath(export);
+        final Path sourcePath = resolvePath(source).orElseGet(this::getDefaultSourcePath);
+
         log.info(String.format("Loading definition file: %s", sourcePath));
         final Description definition = resolveDefinition(parseSource(sourcePath));
         final Format2Map format = new Format2Map(definition);
@@ -58,14 +63,5 @@ public final class ExportMojo extends AbstractPet4BndMojo {
             log.info("Generated properties:");
             format.content().forEach((n, v) -> log.info(new StringBuilder(n).append(" = ").append(v).toString()));
         }
-    }
-
-    /**
-     * Returns the default output path.
-     *
-     * @return the default output path
-     */
-    private Path getDefaultOutputPath() {
-        return Paths.get(getProject().getBuild().getDirectory()).resolve("exports.properties");
     }
 }
