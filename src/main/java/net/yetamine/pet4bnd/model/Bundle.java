@@ -26,7 +26,7 @@ public class Bundle {
      * @param packageExports
      *            the package exports. It must not be {@code null}.
      */
-    protected Bundle(BundleOptions bundleOptions, Map<String, PackageExport> packageExports) {
+    Bundle(BundleOptions bundleOptions, Map<String, PackageExport> packageExports) {
         exports = Objects.requireNonNull(packageExports);
         options = Objects.requireNonNull(bundleOptions);
     }
@@ -42,8 +42,9 @@ public class Bundle {
     public final Optional<VersionVariance> resolution(Feedback feedback) {
         Objects.requireNonNull(feedback);
 
+        VersionVariance bundleVariance = options.versionVariance().orElse(VersionVariance.NONE);
         boolean varianceViolation = false;
-        VersionVariance bundleVariance = VersionVariance.NONE;
+
         for (PackageExport export : exports.values()) {
             final VersionVariance variance = export.versionVariance().orElse(VersionVariance.NONE);
             if (bundleVariance.compareTo(variance) < 0) { // Record the largest one
@@ -97,6 +98,10 @@ public class Bundle {
         if (bundleConstraint.map(v -> v.compareTo(bundleVersion) <= 0).orElse(false)) {
             throw new IllegalStateException();
         }
+
+        options.versionVariance().ifPresent(v -> {
+            options.versionVariance(VersionVariance.NONE);
+        });
 
         for (PackageExport export : exports.values()) {
             final Optional<VersionVariance> variance = export.versionVariance();

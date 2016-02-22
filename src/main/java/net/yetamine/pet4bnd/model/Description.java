@@ -162,7 +162,9 @@ public final class Description extends Bundle implements Persistable<BufferedWri
             }
 
             if (bundleOptions == null) { // Deal with missing bundle options: provide hidden defaults
-                bundleOptions = new BundleOptions(new ValueNode<Version>().set(Version.ZERO), new ValueNode<>());
+                final VersionDefinition definition = new VersionDefinition();
+                definition.versionBaseline().set(Version.ZERO);
+                bundleOptions = new BundleOptions(definition);
                 error("A bundle version option required, but missing.", null);
             }
 
@@ -369,10 +371,6 @@ public final class Description extends Bundle implements Persistable<BufferedWri
                 if (bundleOptions != null) { // Must be unique!
                     warn("Bundle version duplicated. Using only the first occurrence.", null);
                     return;
-                }
-
-                if (definition.versionVariance().get() != null) {
-                    warn("Bundle version shall have no variance.", null);
                 }
 
                 bundleOptions = new BundleOptions(definition);

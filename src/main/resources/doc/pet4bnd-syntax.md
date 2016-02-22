@@ -21,7 +21,7 @@ ENTRY           ::= BUNDLE | PACKAGE
 EOL             ::= {line ending}
 
 
-BUNDLE          ::= '$bundle-version' BASELINE CONSTRAINT? EOL
+BUNDLE          ::= '$bundle-version' BASELINE CONSTRAINT? CHANGE? EOL
 PACKAGE         ::= EXPORT ATTRIBUTES?
 
 EXPORT          ::= {package name} BASELINE CONSTRAINT? CHANGE? EOL

@@ -57,9 +57,7 @@ A package version description consists of several components in this order:
 
 The baseline is mandatory, other parts are optional. The baseline is the version of the package in the previous release (version 0.0.0 shall be used for yet unreleased package). Baseline combined with the change information results in the actual package version; if no change information is present, the version baseline is considered fixed for the tool. If there is any constraint, the actual version must stay below. This provides a safety belt against releasing a package modification under an existing version (useful for branching projects).
 
-What about the `$bundle-version` line? It similar to a package version, but it applies to the whole bundle. It must specify the baseline like a package, it may specify a constraint, but it must not specify any change, because the change is implied by the changes of the exported packages.
-
-A definition must contain `$bundle-version` and it may contain some package exports, but without duplications. 
+What about the `$bundle-version` line? It similar to a package version, but it applies to the whole bundle. The change information for a bundle means the minimal version change to happpen (perhaps due to manually managed versions). A definition must contain `$bundle-version` and it may contain some package exports, but without duplications. 
 
 
 ### Maven integration ###
