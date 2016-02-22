@@ -20,9 +20,10 @@ import java.util.jar.Manifest;
 import net.yetamine.pet4bnd.feedback.Feedback;
 import net.yetamine.pet4bnd.format.Format2Bnd;
 import net.yetamine.pet4bnd.format.Format2Map;
-import net.yetamine.pet4bnd.model.Description;
-import net.yetamine.pet4bnd.model.LineParser;
-import net.yetamine.pet4bnd.version.VersionVariance;
+import net.yetamine.pet4bnd.model.LoggingResolver;
+import net.yetamine.pet4bnd.model.VersionResolver;
+import net.yetamine.pet4bnd.model.format.PetFormat;
+import net.yetamine.pet4bnd.model.format.PetParser;
 
 /**
  * Implementation of the command line interface of the tool.
@@ -146,7 +147,7 @@ public final class Main {
         }
 
         final Feedback feedback = newFeedback(debug);
-        final Description description;
+        final PetFormat description;
 
         try { // Load the source
             if (petFile == null) {
@@ -156,12 +157,13 @@ public final class Main {
 
             feedback.info(String.format("Loading source file: %s", petFile));
             description = loadDescription(petFile, feedback);
+            final VersionResolver resolver = new LoggingResolver(description, feedback::fail);
+            if (resolver.determine().resolution().isPresent()) {
+                resolver.resolve();
+            } else {
+                throw new IOException("One or more version constraints were violated.");
+            }
 
-            final VersionVariance bundleVariance = description.resolution(feedback).orElseThrow(() -> {
-                return new IOException("One or more version constraints were violated.");
-            });
-
-            description.resolve(bundleVariance);
         } catch (NoSuchFileException e) {
             feedback.fail("Missing source file.");
             return EXIT_INPUT;
@@ -202,7 +204,7 @@ public final class Main {
 
             if (bundleVersion) {
                 feedback.info("Dumping the target bundle version.");
-                System.out.println(description.options().versionBaseline());
+                System.out.println(description.version().baseline());
             }
         } catch (IOException e) {
             feedback.fail(null, e);
@@ -224,8 +226,8 @@ public final class Main {
      * @throws IOException
      *             if the input processing failed
      */
-    private static Description loadDescription(Path source, Feedback feedback) throws IOException {
-        final LineParser<Description> parser = Description.parse(source, feedback);
+    private static PetFormat loadDescription(Path source, Feedback feedback) throws IOException {
+        final PetParser parser = PetFormat.parse(source, feedback);
 
         if (parser.errorCount() > 0) {
             throw new IOException("Errors encountered when parsing the definition file.");

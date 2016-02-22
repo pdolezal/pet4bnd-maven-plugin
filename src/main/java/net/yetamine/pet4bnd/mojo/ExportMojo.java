@@ -10,7 +10,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import net.yetamine.pet4bnd.format.Format2Map;
-import net.yetamine.pet4bnd.model.Description;
+import net.yetamine.pet4bnd.model.Bundle;
 
 /**
  * Dumps the version information of the definition elements.
@@ -45,7 +45,7 @@ public final class ExportMojo extends AbstractPet4BndMojo {
         final Path sourcePath = resolvePath(source).orElseGet(this::getDefaultSourcePath);
 
         log.info(String.format("Loading definition file: %s", sourcePath));
-        final Description definition = resolveDefinition(parseSource(sourcePath));
+        final Bundle definition = resolveDefinition(parseSource(sourcePath));
         final Format2Map format = new Format2Map(definition);
 
         try {
@@ -57,7 +57,7 @@ public final class ExportMojo extends AbstractPet4BndMojo {
 
         log.debug("Storing the properties file finished successfully.");
         // Inform about the target version as the last common information
-        log.info(String.format("Target bundle version: %s", definition.options().versionBaseline()));
+        log.info(String.format("Target bundle version: %s", definition.version().baseline()));
 
         if (verbose) { // Dump the result
             log.info("Generated properties:");

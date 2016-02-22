@@ -1,15 +1,14 @@
 package net.yetamine.pet4bnd.model;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
  * A persistable object.
- *
- * @param <T>
- *            the type of the persisting interface
  */
-public interface Persistable<T> {
+public interface Persistable {
 
     /**
      * Stores the encapsulated object in the given sink.
@@ -20,7 +19,7 @@ public interface Persistable<T> {
      * @throws IOException
      *             if storing the object fails
      */
-    void persist(T sink) throws IOException;
+    void persist(OutputStream sink) throws IOException;
 
     /**
      * Stores the encapsulated object in the given file.
@@ -31,5 +30,9 @@ public interface Persistable<T> {
      * @throws IOException
      *             if storing the object fails
      */
-    void store(Path path) throws IOException;
+    default void store(Path path) throws IOException {
+        try (OutputStream sink = Files.newOutputStream(path)) {
+            persist(sink);
+        }
+    }
 }

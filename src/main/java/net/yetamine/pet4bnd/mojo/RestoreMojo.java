@@ -3,12 +3,12 @@ package net.yetamine.pet4bnd.mojo;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import net.yetamine.pet4bnd.model.Description;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+
+import net.yetamine.pet4bnd.model.format.PetFormat;
 
 /**
  * Restores the baselines and resets the change information in the source file.
@@ -28,7 +28,7 @@ public final class RestoreMojo extends AbstractPet4BndMojo {
 
         final Log log = getLog();
         log.info(String.format("Updating definition file: %s", sourcePath));
-        final Description definition = resolveDefinition(parseSource(sourcePath));
+        final PetFormat definition = resolveDefinition(parseSource(sourcePath));
 
         try {
             definition.store(sourcePath);
@@ -36,6 +36,6 @@ public final class RestoreMojo extends AbstractPet4BndMojo {
             throw new MojoExecutionException(e.getMessage(), e);
         }
 
-        log.info(String.format("Target bundle version: %s", definition.options().versionBaseline()));
+        log.info(String.format("Target bundle version: %s", definition.version().baseline()));
     }
 }

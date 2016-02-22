@@ -1,4 +1,4 @@
-package net.yetamine.pet4bnd.model;
+package net.yetamine.pet4bnd.model.format;
 
 import java.util.Objects;
 import java.util.Optional;

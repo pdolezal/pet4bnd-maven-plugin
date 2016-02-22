@@ -6,15 +6,15 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import net.yetamine.pet4bnd.model.Bundle;
-import net.yetamine.pet4bnd.model.BundleOptions;
-import net.yetamine.pet4bnd.version.Version;
-import net.yetamine.pet4bnd.version.VersionVariance;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+
+import net.yetamine.pet4bnd.model.Bundle;
+import net.yetamine.pet4bnd.model.VersionStatement;
+import net.yetamine.pet4bnd.version.Version;
+import net.yetamine.pet4bnd.version.VersionVariance;
 
 /**
  * Updates the POM version to the most suitable snapshot version.
@@ -42,11 +42,12 @@ public final class RefreshMojo extends AbstractPet4BndMojo {
         final Log log = getLog();
         log.info(String.format("Loading definition file: %s", sourcePath));
         final Bundle definition = resolveDefinition(parseSource(sourcePath));
-        log.info(String.format("Bundle version baseline: %s", definition.options().versionBaseline()));
+        final VersionStatement versionStatement = definition.version();
+        final Version baseline = versionStatement.baseline();
+        log.info(String.format("Bundle version baseline: %s", baseline));
 
-        final BundleOptions options = definition.options();
-        final Version versionBaseline = options.versionBaseline().qualifier(null);
-        final Version version = computeTargetVersion(versionBaseline, options.versionConstraint());
+        // Compute the version, but cut off the qualifier as it would be replaced anyway
+        final Version version = computeTargetVersion(baseline.qualifier(null), versionStatement.constraint());
         final String targetVersion = version.toString() + SNAPSHOT_QUALIFIER;
         log.info(String.format("Target bundle version: %s", targetVersion));
 

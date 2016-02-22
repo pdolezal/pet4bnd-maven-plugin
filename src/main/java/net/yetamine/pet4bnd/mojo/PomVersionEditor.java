@@ -26,7 +26,7 @@ import net.yetamine.pet4bnd.model.Persistable;
  * An editor for the version element in a POM file designed to preserve the file
  * content intact as much as possible.
  */
-final class PomVersionEditor implements Persistable<OutputStream> {
+final class PomVersionEditor implements Persistable {
 
     /** Buffer for reading the content. */
     private static final int BUFFER_SIZE = 2048;
@@ -177,22 +177,13 @@ final class PomVersionEditor implements Persistable<OutputStream> {
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.Persistable#persist(java.lang.Object)
+     * @see net.yetamine.pet4bnd.model.Persistable#persist(java.io.OutputStream)
      */
     public void persist(OutputStream sink) throws IOException {
         try (Writer writer = new OutputStreamWriter(sink, charset)) {
             writer.append(content, 0, versionOffset);
             writer.append(version);
             writer.append(content, versionEnding, content.length());
-        }
-    }
-
-    /**
-     * @see net.yetamine.pet4bnd.model.Persistable#store(java.nio.file.Path)
-     */
-    public void store(Path path) throws IOException {
-        try (OutputStream os = Files.newOutputStream(path)) {
-            persist(os);
         }
     }
 

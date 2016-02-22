@@ -16,7 +16,7 @@ import net.yetamine.pet4bnd.model.Persistable;
 /**
  * Formats a definition to a {@link Map}.
  */
-public final class Format2Map implements Persistable<OutputStream> {
+public final class Format2Map implements Persistable {
 
     /** Suffix for the XML-formatted output. */
     private static final String SUFFIX_XML = ".xml";
@@ -37,11 +37,11 @@ public final class Format2Map implements Persistable<OutputStream> {
 
         definition.exports().values().forEach(p -> {
             final String packageName = p.packageName();
-            view.put(packageName, p.versionBaseline().toString());
+            view.put(packageName, p.version().baseline().toString());
             p.attributes().ifPresent(a -> view.put(packageName + "#attributes", a));
         });
 
-        view.put("$bundle-version", definition.options().versionBaseline().toString());
+        view.put("$bundle-version", definition.version().baseline().toString());
         content = Collections.unmodifiableMap(view);
     }
 
@@ -66,7 +66,7 @@ public final class Format2Map implements Persistable<OutputStream> {
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.Persistable#persist(java.lang.Object)
+     * @see net.yetamine.pet4bnd.model.Persistable#persist(java.io.OutputStream)
      */
     public void persist(OutputStream sink) throws IOException {
         toProperties().store(sink, COMMENT);

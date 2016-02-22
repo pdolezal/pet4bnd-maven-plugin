@@ -4,12 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import net.yetamine.pet4bnd.model.Bundle;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+
+import net.yetamine.pet4bnd.model.Bundle;
+import net.yetamine.pet4bnd.version.Version;
 
 /**
  * Updates the POM version to the bundle target version.
@@ -34,12 +35,13 @@ public final class ReleaseMojo extends AbstractPet4BndMojo {
         final Log log = getLog();
         log.info(String.format("Loading definition file: %s", sourcePath));
         final Bundle definition = resolveDefinition(parseSource(sourcePath));
-        log.info(String.format("Target bundle version: %s", definition.options().versionBaseline()));
+        final Version version = definition.version().baseline();
+        log.info(String.format("Target bundle version: %s", version));
 
         try {
             final Path pomPath = pom.toPath();
             log.info(String.format("Updating POM file: %s", pomPath));
-            new PomVersionEditor(pomPath).version(definition.options().versionBaseline().toString()).store(pomPath);
+            new PomVersionEditor(pomPath).version(version.toString()).store(pomPath);
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }

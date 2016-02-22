@@ -1,4 +1,4 @@
-package net.yetamine.pet4bnd.model;
+package net.yetamine.pet4bnd.model.format;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ final class LineNode implements Fragment {
     @Override
     public String toString() {
         switch (fragments.size()) {
-        // @formatter:off
+            // @formatter:off
             case 0 : return "";
             case 1 : return Objects.toString(fragments.get(0), "");
             // @formatter:on

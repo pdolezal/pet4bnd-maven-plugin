@@ -2,9 +2,9 @@ package net.yetamine.pet4bnd.format;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +20,7 @@ import net.yetamine.pet4bnd.model.Persistable;
 /**
  * Formats a definition to the <i>bnd</i> format.
  */
-public final class Format2Bnd implements Persistable<BufferedWriter> {
+public final class Format2Bnd implements Persistable {
 
     /** Export header literal. */
     private static final String EXPORT_HEADER = "Export-Package:";
@@ -63,7 +63,13 @@ public final class Format2Bnd implements Persistable<BufferedWriter> {
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.Persistable#persist(java.lang.Object)
+     * Stores the encapsulated object in the given sink.
+     *
+     * @param sink
+     *            the sink to store the data to. It must not be {@code null}.
+     *
+     * @throws IOException
+     *             if storing the object fails
      */
     public void persist(BufferedWriter sink) throws IOException {
         Objects.requireNonNull(sink);
@@ -116,11 +122,11 @@ public final class Format2Bnd implements Persistable<BufferedWriter> {
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.Persistable#store(java.nio.file.Path)
+     * @see net.yetamine.pet4bnd.model.Persistable#persist(java.io.OutputStream)
      */
-    public void store(Path path) throws IOException {
-        try (BufferedWriter sink = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
-            persist(sink);
+    public void persist(OutputStream sink) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(sink, StandardCharsets.UTF_8))) {
+            persist(writer);
         }
     }
 
@@ -141,7 +147,7 @@ public final class Format2Bnd implements Persistable<BufferedWriter> {
         for (PackageExport packageExport : packageExports) {
             // Build the line with this package's export
             final StringBuilder builder = new StringBuilder(packageExport.packageName()).append(';');
-            builder.append("version=\"").append(packageExport.versionBaseline()).append('"');
+            builder.append("version=\"").append(packageExport.version().baseline()).append('"');
             packageExport.attributes().filter(a -> !a.isEmpty()).ifPresent(a -> {
                 builder.append(';').append(a);
             });

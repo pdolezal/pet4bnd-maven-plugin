@@ -5,16 +5,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import net.yetamine.pet4bnd.feedback.Feedback;
-import net.yetamine.pet4bnd.model.Bundle;
-import net.yetamine.pet4bnd.model.Description;
-import net.yetamine.pet4bnd.model.LineParser;
-import net.yetamine.pet4bnd.version.VersionVariance;
-
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+
+import net.yetamine.pet4bnd.feedback.Feedback;
+import net.yetamine.pet4bnd.model.Bundle;
+import net.yetamine.pet4bnd.model.LoggingResolver;
+import net.yetamine.pet4bnd.model.VersionResolver;
+import net.yetamine.pet4bnd.model.format.PetFormat;
+import net.yetamine.pet4bnd.model.format.PetParser;
 
 /**
  * A base for Mojo implementations with common utilities.
@@ -145,10 +146,10 @@ public abstract class AbstractPet4BndMojo extends AbstractMojo {
      * @throws MojoExecutionException
      *             if there is any error
      */
-    protected final Description parseSource(Path path) throws MojoExecutionException {
+    protected final PetFormat parseSource(Path path) throws MojoExecutionException {
         try {
             final Feedback report = getFeedback();
-            final LineParser<Description> parser = Description.parse(path, report);
+            final PetParser parser = PetFormat.parse(path, report);
 
             if (parser.errorCount() > 0) {
                 throw new MojoExecutionException("Errors encountered when parsing the definition file.");
@@ -181,11 +182,12 @@ public abstract class AbstractPet4BndMojo extends AbstractMojo {
      *             if a fatal error occurs and the update is not valid
      */
     protected final <T extends Bundle> T resolveDefinition(T definition) throws MojoExecutionException {
-        final VersionVariance bundleVariance = definition.resolution(getFeedback()).orElseThrow(() -> {
-            return new MojoExecutionException("One or more version constraints were violated.");
-        });
+        final VersionResolver resolver = new LoggingResolver(definition, getFeedback()::fail);
+        if (resolver.determine().resolution().isPresent()) {
+            resolver.resolve();
+            return definition;
+        }
 
-        definition.resolve(bundleVariance);
-        return definition;
+        throw new MojoExecutionException("One or more version constraints were violated.");
     }
 }
