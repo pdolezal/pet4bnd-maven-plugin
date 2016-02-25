@@ -35,7 +35,7 @@ public final class ReleaseMojo extends AbstractPet4BndMojo {
         final Log log = getLog();
         log.info(String.format("Loading definition file: %s", sourcePath));
         final Bundle definition = resolveDefinition(parseSource(sourcePath));
-        final Version version = definition.version().baseline();
+        final Version version = definition.version().resolution();
         log.info(String.format("Target bundle version: %s", version));
 
         try {

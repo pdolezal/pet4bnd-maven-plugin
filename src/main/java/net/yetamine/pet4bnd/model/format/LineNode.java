@@ -28,11 +28,18 @@ final class LineNode implements Fragment {
         switch (fragments.size()) {
             // @formatter:off
             case 0 : return "";
-            case 1 : return Objects.toString(fragments.get(0), "");
+            case 1 : return Fragment.format(fragments.get(0));
             // @formatter:on
         }
 
-        return fragments.stream().filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+        return fragments.stream().map(f -> Fragment.format(f)).collect(Collectors.joining());
+    }
+
+    /**
+     * @see net.yetamine.pet4bnd.model.format.Fragment#format()
+     */
+    public String format() {
+        return toString();
     }
 
     /**
@@ -57,7 +64,8 @@ final class LineNode implements Fragment {
      * @return this instance
      */
     public LineNode append(String fragment) {
-        return append(new StringNode(fragment));
+        Objects.requireNonNull(fragment);
+        return append(() -> fragment);
     }
 
     /**

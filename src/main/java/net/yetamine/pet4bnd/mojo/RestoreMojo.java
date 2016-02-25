@@ -31,11 +31,12 @@ public final class RestoreMojo extends AbstractPet4BndMojo {
         final PetFormat definition = resolveDefinition(parseSource(sourcePath));
 
         try {
+            definition.restore();
             definition.store(sourcePath);
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
 
-        log.info(String.format("Target bundle version: %s", definition.version().baseline()));
+        log.info(String.format("Target bundle version: %s", definition.version().resolution()));
     }
 }

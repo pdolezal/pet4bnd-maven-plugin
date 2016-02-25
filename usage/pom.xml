@@ -52,7 +52,7 @@
             <plugin>
                 <groupId>net.yetamine</groupId>
                 <artifactId>pet4bnd-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.0.0-SNAPSHOT</version>
 
                 <executions>
                     <execution>

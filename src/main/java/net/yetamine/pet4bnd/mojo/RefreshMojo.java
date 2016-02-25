@@ -3,18 +3,17 @@ package net.yetamine.pet4bnd.mojo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.stream.Stream;
+
+import net.yetamine.pet4bnd.model.Bundle;
+import net.yetamine.pet4bnd.model.BundleVersion;
+import net.yetamine.pet4bnd.version.Version;
+import net.yetamine.pet4bnd.version.VersionVariance;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-
-import net.yetamine.pet4bnd.model.Bundle;
-import net.yetamine.pet4bnd.model.VersionStatement;
-import net.yetamine.pet4bnd.version.Version;
-import net.yetamine.pet4bnd.version.VersionVariance;
 
 /**
  * Updates the POM version to the most suitable snapshot version.
@@ -42,19 +41,20 @@ public final class RefreshMojo extends AbstractPet4BndMojo {
         final Log log = getLog();
         log.info(String.format("Loading definition file: %s", sourcePath));
         final Bundle definition = resolveDefinition(parseSource(sourcePath));
-        final VersionStatement versionStatement = definition.version();
-        final Version baseline = versionStatement.baseline();
+        final BundleVersion bundleVersion = definition.version();
+        final Version baseline = bundleVersion.baseline();
         log.info(String.format("Bundle version baseline: %s", baseline));
 
         // Compute the version, but cut off the qualifier as it would be replaced anyway
-        final Version version = computeTargetVersion(baseline.qualifier(null), versionStatement.constraint());
-        final String targetVersion = version.toString() + SNAPSHOT_QUALIFIER;
-        log.info(String.format("Target bundle version: %s", targetVersion));
+        final Version targetVersion = computeTargetVersion(baseline.qualifier(null), bundleVersion.constraint());
+        final String snapshotVersion = targetVersion.toString() + SNAPSHOT_QUALIFIER;
+        log.info(String.format("Target bundle version: %s", snapshotVersion));
+        assert (targetVersion.compareTo(bundleVersion.resolution()) <= 0);
 
         try {
             final Path pomPath = pom.toPath();
             log.info(String.format("Updating POM file: %s", pomPath));
-            new PomVersionEditor(pomPath).version(targetVersion).store(pomPath);
+            new PomVersionEditor(pomPath).version(snapshotVersion).store(pomPath);
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
@@ -65,8 +65,8 @@ public final class RefreshMojo extends AbstractPet4BndMojo {
      *
      * @param baseline
      *            the version baseline to adjust. It must not be {@code null}.
-     * @param resultConstraint
-     *            the optional constraint. It must not be {@code null}.
+     * @param constraint
+     *            the optional constraint. It may be {@code null} if none.
      *
      * @return the next snapshot version
      *
@@ -74,12 +74,11 @@ public final class RefreshMojo extends AbstractPet4BndMojo {
      *             if the constraint does not allow to raise the baseline
      *             version
      */
-    private static Version computeTargetVersion(Version baseline, Optional<Version> resultConstraint) throws MojoExecutionException {
-        if (!resultConstraint.isPresent()) { // No constraint, use the next major version
+    private static Version computeTargetVersion(Version baseline, Version constraint) throws MojoExecutionException {
+        if (constraint == null) { // No constraint, use the next major version
             return VersionVariance.MAJOR.apply(baseline);
         }
 
-        final Version constraint = resultConstraint.get();
         return Stream.of(VersionVariance.MAJOR, VersionVariance.MINOR, VersionVariance.MICRO)   // Try all adequate version changes, from the major one
                 .map(variance -> variance.apply(baseline))                                      // Apply to get the candidate version
                 .filter(version -> version.compareTo(constraint) < 0)                           // The candidate version must still be constrained!

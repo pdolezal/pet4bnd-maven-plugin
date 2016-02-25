@@ -11,7 +11,7 @@ $bundle-version: 1.2.3 < 3.0.0
 # the bundle version is constrained, then its constraint implies the maximal 
 # increment of package versions.
 
-net.yetamine.pet4bnd.demo: 1.0.2
+net.yetamine.pet4bnd.demo: inherit
 + x-demo:=true
 
 net.yetamine.pet4bnd.demo.greeting: 1.1.5 @ minor

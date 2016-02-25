@@ -4,28 +4,33 @@ import java.util.Objects;
 import java.util.Optional;
 
 import net.yetamine.pet4bnd.model.PackageExport;
-import net.yetamine.pet4bnd.model.VersionStatement;
+import net.yetamine.pet4bnd.model.PackageVersion;
 
 /**
  * Represents a template for a package export directive.
  */
 final class PetExport implements PackageExport {
 
-    /** Definition of the export. */
-    private final VersionDefinition definition;
+    /** Name of this package. */
+    private final String packageName;
+    /** Export version definition. */
+    private final PackageVersion version;
     /** Attributes of the export directive. */
     private final Optional<String> attributes;
 
     /**
      * Creates a new instance.
      *
-     * @param version
+     * @param exportIdentifier
+     *            the package name. It must not be {@code null}.
+     * @param versionDefinition
      *            the definition to use. It must not be {@code null}.
      * @param exportAttributes
      *            the attributes
      */
-    public PetExport(VersionDefinition version, String exportAttributes) {
-        definition = Objects.requireNonNull(version);
+    public PetExport(String exportIdentifier, PackageVersion versionDefinition, String exportAttributes) {
+        packageName = Objects.requireNonNull(exportIdentifier);
+        version = Objects.requireNonNull(versionDefinition);
         attributes = Optional.ofNullable(exportAttributes);
     }
 
@@ -35,7 +40,7 @@ final class PetExport implements PackageExport {
      * @return the name of the exported package
      */
     public String packageName() {
-        return definition.identifier();
+        return packageName;
     }
 
     /**
@@ -50,7 +55,7 @@ final class PetExport implements PackageExport {
     /**
      * @see net.yetamine.pet4bnd.model.PackageExport#version()
      */
-    public VersionStatement version() {
-        return definition;
+    public PackageVersion version() {
+        return version;
     }
 }

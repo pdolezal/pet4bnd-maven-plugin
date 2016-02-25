@@ -37,11 +37,11 @@ public final class Format2Map implements Persistable {
 
         definition.exports().values().forEach(p -> {
             final String packageName = p.packageName();
-            view.put(packageName, p.version().baseline().toString());
+            view.put(packageName, p.version().resolution().toString());
             p.attributes().ifPresent(a -> view.put(packageName + "#attributes", a));
         });
 
-        view.put("$bundle-version", definition.version().baseline().toString());
+        view.put("$bundle-version", definition.version().resolution().toString());
         content = Collections.unmodifiableMap(view);
     }
 

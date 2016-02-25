@@ -57,7 +57,7 @@ public final class ExportMojo extends AbstractPet4BndMojo {
 
         log.debug("Storing the properties file finished successfully.");
         // Inform about the target version as the last common information
-        log.info(String.format("Target bundle version: %s", definition.version().baseline()));
+        log.info(String.format("Target bundle version: %s", definition.version().resolution()));
 
         if (verbose) { // Dump the result
             log.info("Generated properties:");

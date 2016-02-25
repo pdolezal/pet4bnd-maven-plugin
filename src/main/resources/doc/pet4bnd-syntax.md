@@ -20,11 +20,10 @@ COMMENT         ::= '#' {printable character}* EOL
 ENTRY           ::= BUNDLE | PACKAGE
 EOL             ::= {line ending}
 
-
 BUNDLE          ::= '$bundle-version' BASELINE CONSTRAINT? CHANGE? EOL
 PACKAGE         ::= EXPORT ATTRIBUTES?
 
-EXPORT          ::= {package name} BASELINE CONSTRAINT? CHANGE? EOL
+EXPORT          ::= {package name} ( BASELINE | 'inherit' ) CONSTRAINT? CHANGE? EOL
 ATTRIBUTES      ::= '+' {attributes} EOL
 
 BASELINE        ::= ':' VERSION
@@ -47,3 +46,5 @@ foo.baz: 1.1.2         @ none
 ## Semantics ##
 
 All directives may appear at most once. The `$bundle-version` directive is mandatory and must appear (once as implied by the previous sentence).
+
+The `inherit` token within an export directive means that the package version shall be inherited from the bundle version after resolving.

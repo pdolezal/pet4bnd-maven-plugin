@@ -3,13 +3,12 @@ package net.yetamine.pet4bnd.model;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import net.yetamine.pet4bnd.version.Version;
-
 /**
  * The default resolving strategy providing full feedback about the process.
  */
 public final class LoggingResolver extends VersionResolver {
 
+    /** Feedback for logging problems. */
     private final Consumer<? super String> feedback;
 
     /**
@@ -26,24 +25,24 @@ public final class LoggingResolver extends VersionResolver {
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.VersionResolver#fail(net.yetamine.pet4bnd.model.Bundle,
-     *      net.yetamine.pet4bnd.version.Version)
+     * @see net.yetamine.pet4bnd.model.VersionResolver#constraintViolated(net.yetamine.pet4bnd.model.PackageExport)
      */
     @Override
-    protected void fail(Bundle targetBundle, Version targetVersion) {
-        final String f = "Target bundle version %s violates version restriction to %s.";
-        feedback.accept(String.format(f, targetVersion, targetBundle.version().constraint().get()));
+    protected boolean constraintViolated(PackageExport export) {
+        final PackageVersion version = export.version();
+        final String f = "Package '%s': target version %s violates version constraint %s.";
+        feedback.accept(String.format(f, export.packageName(), version.resolution(), version.constraint()));
+        return false;
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.VersionResolver#fail(net.yetamine.pet4bnd.model.PackageExport,
-     *      net.yetamine.pet4bnd.version.Version)
+     * @see net.yetamine.pet4bnd.model.VersionResolver#constraintViolated()
      */
     @Override
-    protected boolean fail(PackageExport export, Version exportVersion) {
-        final String f = "Package '%s': target version %s violates version constraint %s.";
-        final Version constraint = export.version().constraint().get();
-        feedback.accept(String.format(f, export.packageName(), exportVersion, constraint));
-        return false;
+    protected void constraintViolated() {
+        final BundleVersion version = bundle().version();
+        final String f = "Target bundle version %s violates version restriction to %s.";
+        feedback.accept(String.format(f, version.resolution(), version.constraint()));
     }
+
 }

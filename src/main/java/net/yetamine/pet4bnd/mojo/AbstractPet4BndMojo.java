@@ -5,17 +5,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import net.yetamine.pet4bnd.feedback.Feedback;
+import net.yetamine.pet4bnd.model.Bundle;
+import net.yetamine.pet4bnd.model.LoggingResolver;
+import net.yetamine.pet4bnd.model.format.PetFormat;
+import net.yetamine.pet4bnd.model.format.PetParser;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-
-import net.yetamine.pet4bnd.feedback.Feedback;
-import net.yetamine.pet4bnd.model.Bundle;
-import net.yetamine.pet4bnd.model.LoggingResolver;
-import net.yetamine.pet4bnd.model.VersionResolver;
-import net.yetamine.pet4bnd.model.format.PetFormat;
-import net.yetamine.pet4bnd.model.format.PetParser;
 
 /**
  * A base for Mojo implementations with common utilities.
@@ -168,23 +167,20 @@ public abstract class AbstractPet4BndMojo extends AbstractMojo {
     }
 
     /**
-     * Updates the given definition, restoring the baselines and resetting all
-     * changes.
+     * Performs the complete resolution.
      *
      * @param <T>
      *            the type of the result
      * @param definition
-     *            the definition to update. It must not be {@code null}.
+     *            the definition to resolve. It must not be {@code null}.
      *
      * @return the definition
      *
      * @throws MojoExecutionException
-     *             if a fatal error occurs and the update is not valid
+     *             if a fatal error occurs and the resolution is not valid
      */
     protected final <T extends Bundle> T resolveDefinition(T definition) throws MojoExecutionException {
-        final VersionResolver resolver = new LoggingResolver(definition, getFeedback()::fail);
-        if (resolver.determine().resolution().isPresent()) {
-            resolver.resolve();
+        if (new LoggingResolver(definition, getFeedback()::fail).resolve().test()) {
             return definition;
         }
 

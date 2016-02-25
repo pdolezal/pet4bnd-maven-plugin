@@ -16,9 +16,9 @@ import java.util.stream.Stream;
 
 import net.yetamine.pet4bnd.feedback.Feedback;
 import net.yetamine.pet4bnd.model.Bundle;
+import net.yetamine.pet4bnd.model.BundleVersion;
 import net.yetamine.pet4bnd.model.PackageExport;
 import net.yetamine.pet4bnd.model.Persistable;
-import net.yetamine.pet4bnd.model.VersionStatement;
 
 /**
  * Encapsulates a bundle description.
@@ -28,7 +28,7 @@ public final class PetFormat implements Bundle, Persistable {
     /** Packages that the bundle exports. */
     private final Map<String, PackageExport> exports;
     /** Bundle version description. */
-    private final VersionStatement version;
+    private final BundleVersion version;
     /** Representation of the parsed content. */
     private final List<LineNode> representation;
 
@@ -47,7 +47,7 @@ public final class PetFormat implements Bundle, Persistable {
     /**
      * @see net.yetamine.pet4bnd.model.Bundle#version()
      */
-    public VersionStatement version() {
+    public BundleVersion version() {
         return version;
     }
 

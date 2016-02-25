@@ -67,6 +67,6 @@ public final class GenerateMojo extends AbstractPet4BndMojo {
             }
         }
 
-        log.info(String.format("Target bundle version: %s", definition.version().baseline()));
+        log.info(String.format("Target bundle version: %s", definition.version().resolution()));
     }
 }

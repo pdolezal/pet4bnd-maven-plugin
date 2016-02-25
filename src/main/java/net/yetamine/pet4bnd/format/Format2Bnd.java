@@ -147,7 +147,7 @@ public final class Format2Bnd implements Persistable {
         for (PackageExport packageExport : packageExports) {
             // Build the line with this package's export
             final StringBuilder builder = new StringBuilder(packageExport.packageName()).append(';');
-            builder.append("version=\"").append(packageExport.version().baseline()).append('"');
+            builder.append("version=\"").append(packageExport.version().resolution()).append('"');
             packageExport.attributes().filter(a -> !a.isEmpty()).ifPresent(a -> {
                 builder.append(';').append(a);
             });

@@ -157,18 +157,17 @@ public final class Main {
 
             feedback.info(String.format("Loading source file: %s", petFile));
             description = loadDescription(petFile, feedback);
-            final VersionResolver resolver = new LoggingResolver(description, feedback::fail);
-            if (resolver.determine().resolution().isPresent()) {
-                resolver.resolve();
-            } else {
-                throw new IOException("One or more version constraints were violated.");
-            }
-
         } catch (NoSuchFileException e) {
             feedback.fail("Missing source file.");
             return EXIT_INPUT;
         } catch (IOException e) {
             feedback.fail(null, e);
+            return EXIT_INPUT;
+        }
+
+        final VersionResolver resolver = new LoggingResolver(description, feedback::fail);
+        if (!resolver.resolve().test()) { // Resolve the effective versions and check they are valid
+            feedback.fail("One or more version constraints were violated.");
             return EXIT_INPUT;
         }
 
@@ -199,12 +198,13 @@ public final class Main {
 
             if (restore) {
                 feedback.info("Restoring baselines and updating the source file.");
+                description.restore();
                 description.store(petFile);
             }
 
             if (bundleVersion) {
                 feedback.info("Dumping the target bundle version.");
-                System.out.println(description.version().baseline());
+                System.out.println(description.version().resolution());
             }
         } catch (IOException e) {
             feedback.fail(null, e);
