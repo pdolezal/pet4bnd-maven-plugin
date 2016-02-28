@@ -2,64 +2,46 @@ package net.yetamine.pet4bnd.model.format;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import net.yetamine.pet4bnd.feedback.Feedback;
 import net.yetamine.pet4bnd.model.BundleVersion;
 import net.yetamine.pet4bnd.model.PackageExport;
 import net.yetamine.pet4bnd.model.PackageVersion;
-import net.yetamine.pet4bnd.model.VersionDefinition;
+import net.yetamine.pet4bnd.model.VersionGroup;
 import net.yetamine.pet4bnd.model.VersionStatement;
-import net.yetamine.pet4bnd.version.Version;
-import net.yetamine.pet4bnd.version.VersionVariance;
+import net.yetamine.pet4bnd.model.support.BundleVersionDefinition;
+import net.yetamine.pet4bnd.model.support.PackageExportDefinition;
+import net.yetamine.pet4bnd.model.support.PackageGroupDefinition;
+import net.yetamine.pet4bnd.model.support.PackageVersionDefinition;
 
 /**
  * A parser for the {@link PetFormat} class.
  */
 public final class PetParser implements Consumer<CharSequence> {
 
-    /** Name of the option for bundle version. */
-    private static final String BUNDLE_OPTION_VERSION = "$bundle-version";
-
-    /**
-     * Pattern for a non-significant line (comments and blank lines).
-     */
-    private static final Pattern PATTERN_IGNORABLE // @formatter:break
-    = Pattern.compile("^\\s*(#.*)?$");
-
-    /**
-     * Pattern for an attribute specification. The line starts with <i>+</i> and
-     * contains the all attributes as plain text. Whitespace at the ends are
-     * ignored.
-     */
-    private static final Pattern PATTERN_ATTRIBUTES // @formatter:break
-    = Pattern.compile("^\\s*\\+\\s*(?<value>.*?)\\s*$");
+    /** Name of the group representing the bundle version statement. */
+    private static final String BUNDLE_VERSION_STATEMENT = "$bundle";
 
     /** Parsed bundle version statement. */
-    private final BundleVersion bundleVersion = new BundleVersionDefinition();
+    private final BundleVersionDefinition bundleVersion = new BundleVersionDefinition();
+    /** Known version groups (including {@link #bundleVersion()} when found). */
+    private final Map<String, VersionStatement> versionGroups = new HashMap<>();
     /** Parsed package exports (except for the pending one). */
     private final Map<String, PackageExport> bundleExports = new TreeMap<>();
     /** Full line representation to reconstruct the original. */
-    private final List<LineNode> representation = new ArrayList<>();
-
-    /** Version inheritance supplier for packages. */
-    private final Supplier<Version> versionInheriting = bundleVersion::resolution;
+    private final List<TextLine> representation = new ArrayList<>();
 
     /** Export version for {@link #pendingExportIdentifier}. */
     private PackageVersion pendingExportVersion;
     /** Pending package export identifier. */
     private String pendingExportIdentifier;
-    /** Flag for marking the bundle version. */
-    private boolean bundleVersionPresent;
 
     /** Feedback instance. */
     private Feedback feedback = Feedback.none();
@@ -119,66 +101,11 @@ public final class PetParser implements Consumer<CharSequence> {
     public void accept(CharSequence line) {
         checkNotFinished();
 
-        // Try to parse comments and blank lines
-        if (PATTERN_IGNORABLE.matcher(line).matches()) {
-            recordLine(line);
-            return;
-        }
-
-        // Try to parse attributes
-        final Matcher attributes = PATTERN_ATTRIBUTES.matcher(line);
-
-        if (attributes.matches()) { // Attribute value exists
-            if (closePendingExport(attributes.group("value"))) {
-                recordLine(line);
-                return;
-            }
-
-            recordLine(line);
-            error("Export attribute definition missing preceding package export.", null);
-            return;
-        }
-
-        closePendingExport(null); // Nothing like attributes, close the pending export if any
-
         try {
-            final VersionStatementParser parser = new VersionStatementParser(line);
-
-            final VersionStatement version;
-            final String identifier = parser.parseIdentifier();
-            if (BUNDLE_OPTION_VERSION.equals(identifier)) {
-                if (bundleVersionPresent) {
-                    recordLine(line);
-                    warn("Bundle version duplicated. Using the first occurrence.", null);
-                    return;
-                }
-
-                bundleVersionPresent = true;
-                version = bundleVersion;
-            } else {
-                version = new PackageVersionDefinition(versionInheriting);
-            }
-
-            version.baseline(parser.parseBaseline(o -> version.baseline()));
-            version.constraint(parser.parseConstraint(o -> version.constraint()));
-            version.variance(parser.parseVariance(o -> {
-                final VersionVariance variance = version.variance();
-                return (variance != null) ? variance.toString().toLowerCase() : null;
-            }));
-
-            if (!parser.finish()) { // Record the trailing part, hence it may just warn
-                warn("Unknown construct found at the end of the line.", null);
-            }
-
-            // Record a pending package export
-            if (version instanceof PackageVersion) {
-                createPendingExport(identifier, (PackageVersion) version);
-            }
-
-            representation.add(parser.representation());
+            accept(new LineParser(line));
         } catch (ParseException e) {
-            recordLine(line);
-            error(null, e);
+            saveLine(line);
+            error(e);
         }
     }
 
@@ -201,8 +128,9 @@ public final class PetParser implements Consumer<CharSequence> {
 
         closePendingExport(null);
 
-        if (!bundleVersionPresent) { // This is an error indeed as it prevents safe formatting
-            error("A bundle version option required, but missing.", null);
+        if (!versionGroups.containsKey(BUNDLE_VERSION_STATEMENT)) {
+            final String f = "The %s declaration required, but missing.";
+            error(String.format(f, BUNDLE_VERSION_STATEMENT), null);
         }
 
         result = Optional.of(new PetFormat(this));
@@ -254,7 +182,7 @@ public final class PetParser implements Consumer<CharSequence> {
      *
      * @return the representation details
      */
-    List<LineNode> representation() {
+    List<TextLine> representation() {
         return representation;
     }
 
@@ -283,16 +211,6 @@ public final class PetParser implements Consumer<CharSequence> {
         if (finished()) {
             throw new IllegalStateException();
         }
-    }
-
-    /**
-     * Records the line as it is.
-     *
-     * @param line
-     *            the line to record. It must not be {@code null}.
-     */
-    private void recordLine(CharSequence line) {
-        representation.add(new LineNode().append(line.toString()));
     }
 
     /**
@@ -335,12 +253,12 @@ public final class PetParser implements Consumer<CharSequence> {
         // Check the name availability
         if (bundleExports.containsKey(exportIdentifier)) {
             final String f = "Duplicated definition for '%s'. Using only the first occurrence.";
-            warn(String.format(f, exportIdentifier), null);
+            warn(String.format(f, exportIdentifier));
             return true;
         }
 
         // Record the export
-        final PackageExport packageExport = new PetExport(exportIdentifier, exportVersion, attributes);
+        final PackageExport packageExport = new PackageExportDefinition(exportIdentifier, exportVersion, attributes);
         final PackageExport last = bundleExports.put(packageExport.packageName(), packageExport);
         assert (last == null);
         return true;
@@ -350,7 +268,7 @@ public final class PetParser implements Consumer<CharSequence> {
      * Reports an error.
      *
      * @param message
-     *            the message
+     *            the message. It must not be {@code null}.
      * @param t
      *            the related exception if available
      */
@@ -362,341 +280,175 @@ public final class PetParser implements Consumer<CharSequence> {
     /**
      * Reports an error.
      *
+     * @param t
+     *            the related exception. It must not be {@code null}.
+     */
+    private void error(Throwable t) {
+        ++errorCount;
+        feedback.fail(t);
+    }
+
+    /**
+     * Reports an error.
+     *
      * @param message
      *            the message
-     * @param t
-     *            the related exception if available
      */
-    private void warn(String message, Throwable t) {
+    private void warn(String message) {
         ++warningCount;
-        feedback.warn(message, t);
-    }
-
-    private static final class VersionStatementParser {
-
-        /** Name of the version inheritance directive. */
-        private static final String VERSION_DIRECTIVE_INHERIT = "inherit";
-
-        /**
-         * Pattern for finding the name of a definition.
-         */
-        private static final Pattern PATTERN_DEFINITION_NAME // @formatter:break
-        = Pattern.compile("\\A\\s*(?<value>[^\\s:=<@#]+)\\s*:\\s*");
-
-        /**
-         * Pattern for finding the version baseline.
-         */
-        private static final Pattern PATTERN_DEFINITION_BASELINE // @formatter:break
-        = Pattern.compile("(?<directive>[A-Z-a-z]+)|(?<value>\\d+(\\.\\d+)?(\\.\\d+)?(\\.[^\\s:=<@#]+)?)");
-
-        /**
-         * Pattern for finding the version constraint.
-         */
-        private static final Pattern PATTERN_DEFINITION_CONSTRAINT // @formatter:break
-        = Pattern.compile("(?<prefix>\\s*<\\s*)(?<value>\\d+(\\.\\d+)?(\\.\\d+)?(\\.[^\\s:=<@#]+)?)");
-
-        /**
-         * Pattern for finding the version variance.
-         */
-        private static final Pattern PATTERN_DEFINITION_VARIANCE // @formatter:break
-        = Pattern.compile("(?<prefix>\\s*@\\s*)(?<value>[A-Za-z]+)");
-
-        /**
-         * Pattern for finding the trailing characters.
-         */
-        private static final Pattern PATTERN_DEFINITION_TRAILING // @formatter:break
-        = Pattern.compile("\\s*(#.*)?");
-
-        private final CharSequence line;
-        private final LineNode representation;
-        private int position;
-
-        /**
-         * Creates a new instance.
-         *
-         * @param source
-         *            the source to parse. It must not be {@code null}.
-         * @param startPosition
-         *            the position to start with
-         */
-        public VersionStatementParser(CharSequence source, int startPosition) {
-            position = Math.min(Math.max(0, startPosition), source.length());
-            representation = new LineNode();
-            line = source;
-        }
-
-        /**
-         * Creates a new instance.
-         *
-         * @param source
-         *            the source to parse. It must not be {@code null}.
-         */
-        public VersionStatementParser(CharSequence source) {
-            this(source, 0);
-        }
-
-        /**
-         * Returns the line representation.
-         *
-         * @return the line representation
-         */
-        public LineNode representation() {
-            return representation;
-        }
-
-        /**
-         * Parses the identifier.
-         *
-         * @return the identifier
-         *
-         * @throws ParseException
-         *             if the parsing fails
-         */
-        public String parseIdentifier() throws ParseException {
-            final Matcher name = PATTERN_DEFINITION_NAME.matcher(line);
-
-            if (!name.find()) { // Name malformed or not a valid definition line at all
-                throw new ParseException("Unacceptable definition name.", position);
-            }
-
-            final String result = name.group("value");
-            representation.append(name.group());
-            position = name.end();
-            return result;
-        }
-
-        /**
-         * Parses the version baseline.
-         *
-         * @param formatter
-         *            the formatter of the representation placeholder. It must
-         *            not be {@code null}.
-         *
-         * @return the version baseline
-         *
-         * @throws ParseException
-         *             if the parsing fails
-         */
-        public Version parseBaseline(Function<? super Version, ?> formatter) throws ParseException {
-            assert (formatter != null);
-
-            if (line.length() <= position) { // Match the version baseline
-                throw new ParseException("Missing version baseline.", position);
-            }
-
-            final Matcher matcher = PATTERN_DEFINITION_BASELINE.matcher(line);
-
-            if (!matcher.find(position)) {
-                throw new ParseException("Version baseline invalid.", position);
-            }
-
-            final String directive = matcher.group("directive");
-            if (VERSION_DIRECTIVE_INHERIT.equals(directive)) {
-                representation.append(directive);
-                position = matcher.end();
-                return null;
-            }
-
-            if (directive != null) { // Value would be null otherwise
-                throw new ParseException(String.format("Unknown directive '%s'.", directive), position);
-            }
-
-            final Version result = parseVersion(matcher.group("value"), position);
-            representation.append(() -> Objects.toString(formatter.apply(result), ""));
-            position = matcher.end();
-            return result;
-        }
-
-        /**
-         * Parses the version constraint.
-         *
-         * @param formatter
-         *            the formatter of the representation placeholder. It must
-         *            not be {@code null}.
-         *
-         * @return the version constraint, or {@code null} if none
-         *
-         * @throws ParseException
-         *             if the parsing fails
-         */
-        public Version parseConstraint(Function<? super Version, ?> formatter) throws ParseException {
-            assert (formatter != null);
-
-            if (position < line.length()) {
-                final Matcher matcher = PATTERN_DEFINITION_CONSTRAINT.matcher(line);
-
-                if (matcher.find(position)) {
-                    final Version result = parseVersion(matcher.group("value"), position);
-                    final String prefix = matcher.group("prefix");
-
-                    representation.append(() -> {
-                        final Object value = formatter.apply(result);
-                        return (value != null) ? prefix + value : "";
-                    });
-
-                    position = matcher.end();
-                    return result;
-                }
-            }
-
-            representation.append(() -> {
-                final Object value = formatter.apply(null);
-                return (value != null) ? " < " + value : "";
-            });
-
-            return null;
-        }
-
-        /**
-         * Parses the version variance.
-         *
-         * @param formatter
-         *            the formatter of the representation placeholder. It must
-         *            not be {@code null}.
-         *
-         * @return the version variance, or {@code null} if none
-         *
-         * @throws ParseException
-         *             if the parsing fails
-         */
-        public VersionVariance parseVariance(Function<? super VersionVariance, ?> formatter) throws ParseException {
-            assert (formatter != null);
-
-            if (position < line.length()) {
-                final Matcher matcher = PATTERN_DEFINITION_VARIANCE.matcher(line);
-
-                if (matcher.find(position)) {
-                    final VersionVariance result;
-                    try { // Parse the variance safely
-                        result = VersionVariance.valueOf(matcher.group("value").toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        final ParseException t = new ParseException(e.getMessage(), position);
-                        t.initCause(e);
-                        throw t;
-                    }
-
-                    final String prefix = matcher.group("prefix");
-
-                    representation.append(() -> {
-                        final Object value = formatter.apply(result);
-                        return (value != null) ? prefix + value : "";
-                    });
-
-                    position = matcher.end();
-                    return result;
-                }
-            }
-
-            representation.append(() -> {
-                final Object value = formatter.apply(null);
-                return (value != null) ? " @ " + value : "";
-            });
-
-            return null;
-        }
-
-        /**
-         * Parses the trailing part of the input line and stores it.
-         *
-         * @return {@code true} if the trailing part contains no unexpected
-         *         characters
-         */
-        public boolean finish() {
-            // Check the trailing string (but do not store useless whitespace)
-            final String trailing = line.subSequence(position, line.length()).toString();
-            representation.append(trailing); // Store trailing always
-            return PATTERN_DEFINITION_TRAILING.matcher(trailing).matches();
-        }
-
-        /**
-         * Parses a version string.
-         *
-         * @param value
-         *            the value to parse. It must not be {@code null}.
-         * @param position
-         *            the position to report as an error if the parsing fails
-         *
-         * @return the version
-         *
-         * @throws ParseException
-         *             if the parsing fails
-         */
-        private static Version parseVersion(String value, int position) throws ParseException {
-            try {
-                return Version.valueOf(value);
-            } catch (IllegalArgumentException e) {
-                final ParseException t = new ParseException(e.getMessage(), position);
-                t.initCause(e);
-                throw t;
-            }
-        }
-    }
-}
-
-/**
- * Represents a definition statement for a bundle.
- */
-final class BundleVersionDefinition extends VersionDefinition implements BundleVersion {
-
-    /**
-     * Creates a new instance.
-     */
-    public BundleVersionDefinition() {
-        super.baseline(Version.ZERO);
+        feedback.warn(message);
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.VersionStatement#resolution()
-     */
-    @Override
-    public Version resolution() {
-        final Version resolution = super.resolution();
-        if (resolution != null) {
-            return resolution;
-        }
-
-        final Version baseline = baseline();
-        final VersionVariance variance = variance();
-        return (variance != null) ? variance.apply(baseline) : baseline;
-    }
-}
-
-/**
- * Represents a definition statement for a package.
- */
-final class PackageVersionDefinition extends VersionDefinition implements PackageVersion {
-
-    /** Dynamic resolver. */
-    private final Supplier<Version> resolver;
-
-    /**
-     * Creates a new instance.
+     * Saves the line as it is in the {@link #representation()}.
      *
-     * @param resolutionSupplier
-     *            the supplier of the baseline version for the cases when the
-     *            baseline version shall be inherited. It must not be
-     *            {@code null}.
+     * @param line
+     *            the line to record. It must not be {@code null}.
      */
-    public PackageVersionDefinition(Supplier<Version> resolutionSupplier) {
-        resolver = Objects.requireNonNull(resolutionSupplier);
+    private void saveLine(CharSequence line) {
+        representation.add(new TextLine().append(line.toString()));
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.VersionDefinition#resolution()
+     * Accepts the source fragment with the given parser.
+     *
+     * @param parser
+     *            the parser to use for processing the source. It must not be
+     *            {@code null}.
+     *
+     * @throws ParseException
+     *             if parsing the source fails
      */
-    @Override
-    public Version resolution() {
-        final Version resolution = super.resolution();
-        if (resolution != null) {
-            return resolution;
+    private void accept(LineParser parser) throws ParseException {
+        // Parse comments and blank lines
+        if (parser.parseIgnorable()) {
+            representation.add(parser.text());
+            return;
         }
 
-        final Version baseline = baseline();
-        if (baseline == null) {
-            return resolver.get();
+        // Parse attributes for a pending export
+        final String attributes = parser.parseAttributes();
+
+        if (attributes != null) {
+            if (closePendingExport(attributes)) {
+                representation.add(parser.text());
+                return;
+            }
+
+            // Valid source, but not semantically (must follow an export)
+            throw parser.failure("Export attribute definition missing preceding package export.");
         }
 
-        final VersionVariance variance = variance();
-        return (variance != null) ? variance.apply(baseline) : baseline;
+        closePendingExport(null); // Nothing like attributes, close the pending export if any
+
+        // Parse a group declaration
+        final String group = parser.parseGroupDeclaration();
+
+        if (group != null) { // It is a group
+            if (versionGroups.containsKey(group)) {
+                saveLine(parser.line()); // Save before warning (might throw)
+                final String f = "Declaration of '%s' duplicated. Using the first occurrence.";
+                warn(String.format(f, group));
+                return;
+            }
+
+            final VersionStatement statement;
+            if (BUNDLE_VERSION_STATEMENT.equals(group)) {
+                statement = bundleVersion;
+            } else {
+                // If not a reserved name, make a new definition
+                statement = new PackageGroupDefinition(group);
+            }
+
+            statement.baseline(parser.requireBaseline(() -> statement.baseline().toString()));
+            parseVersionDetails(parser, statement);
+            versionGroups.put(group, statement);
+            representation.add(parser.text());
+            return;
+        }
+
+        // Parse an export declaration
+        final String export = parser.parseExportDeclaration();
+        if (export == null) { // Which is mandatory as the last option left
+            throw parser.failure("Unknown construct found.");
+        }
+
+        final PackageVersion version = new PackageVersionDefinition();
+        requireVersionBaseline(parser, version);
+        parseVersionDetails(parser, version);
+        createPendingExport(export, version);
+        representation.add(parser.text());
+    }
+
+    /**
+     * Parses a version baseline.
+     *
+     * @param parser
+     *            the parser to use. It must not be {@code null}.
+     * @param version
+     *            the version object to fill with the data. It must not be
+     *            {@code null}.
+     *
+     * @throws ParseException
+     *             if the parsing fails
+     */
+    private void requireVersionBaseline(LineParser parser, PackageVersion version) throws ParseException {
+        // Make the formater for the version baseline
+        final TextFragment baselineFormatter = () -> {
+            return version.inheritance().map(s -> {
+                if (s instanceof BundleVersion) {
+                    return BUNDLE_VERSION_STATEMENT;
+                }
+
+                if (s instanceof VersionGroup) {
+                    return ((VersionGroup) s).identifier();
+                }
+
+                final String f = "Unable to format reference of class '%s'.";
+                throw new IllegalArgumentException(String.format(f, s.getClass()));
+            }).orElseGet(() -> version.baseline().toString());
+        };
+
+        // Parse the baseline as a group reference
+        final String reference = parser.parseGroupReference(baselineFormatter);
+        if (reference == null) { // If no reference, the version baseline must be here
+            version.baseline(parser.requireBaseline(baselineFormatter));
+            return;
+        }
+
+        final VersionStatement statement = versionGroups.get(reference);
+
+        if (statement == null) {
+            final String f = "Reference to undefined group '%s'.";
+            throw parser.failure(String.format(f, reference));
+        }
+
+        version.inherit(statement);
+    }
+
+    /**
+     * Parses the version details (common for group and export definitions).
+     *
+     * @param parser
+     *            the parser to use. It must not be {@code null}.
+     * @param statement
+     *            the statement to fill with the data. It must not be
+     *            {@code null}.
+     *
+     * @throws ParseException
+     *             if the parsing fails
+     */
+    private void parseVersionDetails(LineParser parser, VersionStatement statement) throws ParseException {
+        statement.constraint(parser.parseConstraint(() -> {
+            return statement.constraint().map(Object::toString).orElse(null);
+        }));
+
+        statement.variance(parser.parseVariance(() -> {
+            return statement.variance().map(Object::toString).map(String::toLowerCase).orElse(null);
+        }));
+
+        if (!parser.consumeTrailing()) { // Record the trailing part, hence it may just warn
+            warn("Unknown construct found at the end of the line.");
+        }
     }
 }

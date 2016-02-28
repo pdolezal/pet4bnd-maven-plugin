@@ -1,4 +1,4 @@
-package net.yetamine.pet4bnd.model.format;
+package net.yetamine.pet4bnd.model.support;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -7,9 +7,9 @@ import net.yetamine.pet4bnd.model.PackageExport;
 import net.yetamine.pet4bnd.model.PackageVersion;
 
 /**
- * Represents a template for a package export directive.
+ * Represents a package export directive.
  */
-final class PetExport implements PackageExport {
+public final class PackageExportDefinition implements PackageExport {
 
     /** Name of this package. */
     private final String packageName;
@@ -28,7 +28,7 @@ final class PetExport implements PackageExport {
      * @param exportAttributes
      *            the attributes
      */
-    public PetExport(String exportIdentifier, PackageVersion versionDefinition, String exportAttributes) {
+    public PackageExportDefinition(String exportIdentifier, PackageVersion versionDefinition, String exportAttributes) {
         packageName = Objects.requireNonNull(exportIdentifier);
         version = Objects.requireNonNull(versionDefinition);
         attributes = Optional.ofNullable(exportAttributes);

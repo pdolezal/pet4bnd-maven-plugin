@@ -2,8 +2,6 @@ package net.yetamine.pet4bnd.model;
 
 import java.util.Map;
 
-import net.yetamine.pet4bnd.version.VersionVariance;
-
 /**
  * Represents a bundle.
  */
@@ -24,15 +22,10 @@ public interface Bundle {
     Map<String, PackageExport> exports();
 
     /**
-     * Restores the baseline from the resolution.
+     * Restores the baselines from the resolution.
      */
     default void restore() {
-        final BundleVersion bundleVersion = version();
-        bundleVersion.baseline(bundleVersion.resolution());
-        if (bundleVersion.variance() != null) {
-            bundleVersion.variance(VersionVariance.NONE);
-        }
-
+        version().restore();
         exports().values().forEach(PackageExport::restore);
     }
 }

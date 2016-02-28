@@ -30,7 +30,7 @@ public final class PetFormat implements Bundle, Persistable {
     /** Bundle version description. */
     private final BundleVersion version;
     /** Representation of the parsed content. */
-    private final List<LineNode> representation;
+    private final List<TextLine> representation;
 
     /**
      * Creates a new instance.
@@ -61,6 +61,10 @@ public final class PetFormat implements Bundle, Persistable {
     /**
      * Parses the specified definition file.
      *
+     * <p>
+     * The implementation uses the given feedback to report the lines where an
+     * error or warning occurs.
+     *
      * @param path
      *            the path to the file. It must not be {@code null}.
      * @param feedback
@@ -73,8 +77,16 @@ public final class PetFormat implements Bundle, Persistable {
      */
     public static PetParser parse(Path path, Feedback feedback) throws IOException {
         try (Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8)) {
-            final PetParser parser = new PetParser().feedback(feedback);
-            lines.forEach(parser); // Perform the actual processing
+            final ParsingFeedback logger = new ParsingFeedback(feedback);
+            final PetParser parser = new PetParser().feedback(logger);
+
+            lines.forEach(line -> {
+                logger.record(line);
+                parser.accept(line);
+            });
+
+            // No line now
+            logger.record(null, 0);
             return parser.finish();
         }
     }
@@ -101,7 +113,7 @@ public final class PetFormat implements Bundle, Persistable {
      *             if storing the object fails
      */
     public void persist(BufferedWriter sink) throws IOException {
-        for (LineNode line : representation) {
+        for (TextLine line : representation) {
             sink.write(line.toString());
             sink.newLine();
         }
@@ -113,6 +125,104 @@ public final class PetFormat implements Bundle, Persistable {
     public void persist(OutputStream sink) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(sink, StandardCharsets.UTF_8))) {
             persist(writer);
+        }
+    }
+
+    /**
+     * Input tracking feedback.
+     */
+    private static final class ParsingFeedback implements Feedback {
+
+        /** Underlying feedback instance. */
+        private final Feedback feedback;
+        /** Current input. */
+        private String input;
+        /** Current line. */
+        private int position;
+
+        /**
+         * Creates a new instance.
+         *
+         * @param backing
+         *            the underlying feedback instance. It must not be
+         *            {@code null}.
+         */
+        public ParsingFeedback(Feedback backing) {
+            feedback = Objects.requireNonNull(backing);
+        }
+
+        /**
+         * Stores the line for the next messages.
+         *
+         * @param line
+         *            the line to store
+         * @param number
+         *            the line number
+         */
+        public void record(String line, int number) {
+            position = number;
+            input = line;
+        }
+
+        /**
+         * Stores the next line for the next messages, i.e., increments the line
+         * number.
+         *
+         * @param line
+         *            the line to store
+         */
+        public void record(String line) {
+            input = line;
+
+            if (input != null) {
+                ++position;
+            }
+        }
+
+        /**
+         * @see net.yetamine.pet4bnd.feedback.Feedback#fail(java.lang.String,
+         *      java.lang.Throwable)
+         */
+        public void fail(String message, Throwable t) {
+            if (input == null) {
+                feedback.fail(message, t);
+                return;
+            }
+
+            feedback.fail(message);
+            feedback.fail(reference(), t);
+        }
+
+        /**
+         * @see net.yetamine.pet4bnd.feedback.Feedback#warn(java.lang.String,
+         *      java.lang.Throwable)
+         */
+        public void warn(String message, Throwable t) {
+            if (input == null) {
+                feedback.warn(message, t);
+                return;
+            }
+
+            feedback.warn(message);
+            feedback.warn(reference(), t);
+        }
+
+        /**
+         * @see net.yetamine.pet4bnd.feedback.Feedback#info(java.lang.String)
+         */
+        public void info(String message) {
+            feedback.info(message);
+        }
+
+        /**
+         * Renders the reference for the current input, which must not be
+         * {@code null}.
+         *
+         * @return the reference for the current input
+         */
+        private String reference() {
+            assert (input != null);
+            return (position > 0) ? String.format("See line %d: %s", position, input) : "See: " + input;
         }
     }
 }

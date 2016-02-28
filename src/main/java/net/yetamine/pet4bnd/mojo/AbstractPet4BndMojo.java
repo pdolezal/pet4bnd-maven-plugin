@@ -3,18 +3,19 @@ package net.yetamine.pet4bnd.mojo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Optional;
+
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 
 import net.yetamine.pet4bnd.feedback.Feedback;
 import net.yetamine.pet4bnd.model.Bundle;
 import net.yetamine.pet4bnd.model.LoggingResolver;
 import net.yetamine.pet4bnd.model.format.PetFormat;
 import net.yetamine.pet4bnd.model.format.PetParser;
-
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
 
 /**
  * A base for Mojo implementations with common utilities.
@@ -111,7 +112,7 @@ public abstract class AbstractPet4BndMojo extends AbstractMojo {
                  *      java.lang.Throwable)
                  */
                 public void fail(String message, Throwable t) {
-                    getLog().error(message, t);
+                    getLog().error(Objects.requireNonNull(message), t);
                 }
 
                 /**
@@ -119,14 +120,14 @@ public abstract class AbstractPet4BndMojo extends AbstractMojo {
                  *      java.lang.Throwable)
                  */
                 public void warn(String message, Throwable t) {
-                    getLog().warn(message, t);
+                    getLog().warn(Objects.requireNonNull(message), t);
                 }
 
                 /**
                  * @see net.yetamine.pet4bnd.feedback.Feedback#info(java.lang.String)
                  */
                 public void info(String message) {
-                    getLog().info(message);
+                    getLog().info(Objects.requireNonNull(message));
                 }
             };
         }

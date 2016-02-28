@@ -1,8 +1,9 @@
 package net.yetamine.pet4bnd.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
-import net.yetamine.pet4bnd.version.Version;
 import net.yetamine.pet4bnd.version.VersionVariance;
 
 /**
@@ -24,7 +25,7 @@ public class VersionResolver {
     }
 
     /**
-     * Resolves the effective versions of the bundle and all packages.
+     * Resolves the versions for the bundle and all packages.
      *
      * @param bundle
      *            the bundle to resolve. It must not be {@code null}.
@@ -33,17 +34,14 @@ public class VersionResolver {
         final BundleVersion bundleVersion = bundle.version();
 
         // Get the variance for resolving the bundle at first
-        VersionVariance resolutionVariance = bundleVersion.variance();
-        if (resolutionVariance == null) {
-            resolutionVariance = VersionVariance.NONE;
-        }
-
+        VersionVariance resolutionVariance = bundleVersion.variance().orElse(VersionVariance.NONE);
         // If the variance is not the maximum, it must be found out precisely
         if (resolutionVariance != VersionVariance.MAJOR) {
             for (PackageExport export : bundle.exports().values()) {
-                final VersionVariance exportVariance = export.version().variance();
-                if ((exportVariance != null) && (resolutionVariance.compareTo(exportVariance) < 0)) {
-                    resolutionVariance = exportVariance; // Get the maximum of them
+                final VersionVariance variance = export.version().variance().orElse(VersionVariance.NONE);
+
+                if (resolutionVariance.compareTo(variance) < 0) {
+                    resolutionVariance = variance; // Get the maximum of them
                     if (resolutionVariance == VersionVariance.MAJOR) {
                         break; // Short-circuit evaluation
                     }
@@ -57,21 +55,25 @@ public class VersionResolver {
             bundleVersion.variance(VersionVariance.NONE);
         }
 
-        // Resolve the packages now (inheritance shall apply this time)
-        for (PackageExport export : bundle.exports().values()) {
-            final PackageVersion exportVersion = export.version();
+        // Record the inheritance sources and the effective variances for them
+        final Map<VersionStatement, VersionVariance> sources = new HashMap<>();
+        // Force default resolution for all exports and get their inheritance sources
+        bundle.exports().values().stream().map(PackageExport::version).forEach(version -> {
+            version.inheritance().filter(source -> (source != bundleVersion)).ifPresent(source -> {
+                // Remember the source, if not done already, with its current variance
+                final VersionVariance current = sources.computeIfAbsent(source, v -> {
+                    return v.variance().orElse(VersionVariance.NONE);
+                });
 
-            final VersionVariance exportVariance = exportVersion.variance();
-            if (exportVariance == null) { // Manually versioned package
-                exportVersion.resolve(null);
-                continue;
-            }
+                // If there is any variance, greater than the current one, update the record
+                version.variance().filter(v -> current.compareTo(v) < 0).ifPresent(v -> sources.put(source, v));
+            });
 
-            final Version exportBaseline = exportVersion.baseline();
-            // If not inheriting the version, compute the new version, otherwise force inheritance
-            exportVersion.resolve((exportBaseline != null) ? exportVariance.apply(exportBaseline) : null);
-            exportVersion.variance(VersionVariance.NONE);
-        }
+            version.resolve(null);
+        });
+
+        // Force the resolution for the sources then
+        sources.forEach((source, variance) -> source.resolve(variance.apply(source.baseline())));
     }
 
     /**
@@ -84,7 +86,7 @@ public class VersionResolver {
     }
 
     /**
-     * Resolves the effective versions of the bundle and all packages.
+     * Resolves the versions of the bundle and all packages.
      *
      * @return this instance
      */
@@ -94,40 +96,35 @@ public class VersionResolver {
     }
 
     /**
-     * Returns the effective versions are valid.
+     * Tests if all version resolutions for the bundle and all packages are
+     * valid.
      *
-     * @return {@code true} if the effective versions are valid, {@code false}
+     * @return {@code true} if all version resolutions are valid, {@code false}
      *         otherwise
      */
     public final boolean test() {
         boolean result = true;
 
-        // Check the package versions
+        // Check the package versions first to get the full report possibly
         for (PackageExport export : bundle.exports().values()) {
-            final PackageVersion exportVersion = export.version();
-            final Version exportConstraint = exportVersion.constraint();
-            if (exportConstraint == null) {
+            if (export.version().test()) {
                 continue;
             }
 
-            if (exportConstraint.compareTo(exportVersion.resolution()) <= 0) {
-                if (constraintViolated(export)) {
-                    return false;
-                }
-
-                result = false;
+            if (constraintViolated(export)) {
+                return false;
             }
+
+            result = false;
         }
 
         // Check the bundle version
-        final BundleVersion bundleVersion = bundle.version();
-        final Version bundleConstraint = bundleVersion.constraint();
-        if ((bundleConstraint != null) && (bundleConstraint.compareTo(bundleVersion.resolution()) <= 0)) {
-            constraintViolated();
-            return false;
+        if (bundle.version().test()) {
+            return result;
         }
 
-        return result;
+        constraintViolated();
+        return false;
     }
 
     /**

@@ -2,8 +2,6 @@ package net.yetamine.pet4bnd.model;
 
 import java.util.Optional;
 
-import net.yetamine.pet4bnd.version.VersionVariance;
-
 /**
  * Represents a package export directive.
  */
@@ -31,17 +29,9 @@ public interface PackageExport {
     Optional<String> attributes();
 
     /**
-     * Restores the baseline from the resolution.
+     * Restores the baselines from the resolution.
      */
     default void restore() {
-        final PackageVersion exportVersion = version();
-
-        if (exportVersion.baseline() != null) { // Do not override inheritance
-            exportVersion.baseline(exportVersion.resolution());
-        }
-
-        if (exportVersion.variance() != null) { // Do not override manual versions
-            exportVersion.variance(VersionVariance.NONE);
-        }
+        version().restore();
     }
 }

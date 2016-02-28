@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -161,12 +162,12 @@ public final class Main {
             feedback.fail("Missing source file.");
             return EXIT_INPUT;
         } catch (IOException e) {
-            feedback.fail(null, e);
+            feedback.fail(e);
             return EXIT_INPUT;
         }
 
         final VersionResolver resolver = new LoggingResolver(description, feedback::fail);
-        if (!resolver.resolve().test()) { // Resolve the effective versions and check they are valid
+        if (!resolver.resolve().test()) { // Resolve the versions and check they are valid
             feedback.fail("One or more version constraints were violated.");
             return EXIT_INPUT;
         }
@@ -207,7 +208,7 @@ public final class Main {
                 System.out.println(description.version().resolution());
             }
         } catch (IOException e) {
-            feedback.fail(null, e);
+            feedback.fail(e);
             return EXIT_OUTPUT;
         }
 
@@ -258,7 +259,7 @@ public final class Main {
              *      java.lang.Throwable)
              */
             public void fail(String message, Throwable t) {
-                System.err.format("[ERROR] %s%n", ((message == null) && (t != null)) ? t.getMessage() : message);
+                System.err.format("[ERROR] %s%n", Objects.requireNonNull(message));
 
                 if (debug && (t != null)) {
                     System.err.println("[DEBUG] Error details:");
@@ -271,7 +272,7 @@ public final class Main {
              *      java.lang.Throwable)
              */
             public void warn(String message, Throwable t) {
-                System.err.format("[WARNING] %s%n", ((message == null) && (t != null)) ? t.getMessage() : message);
+                System.err.format("[WARNING] %s%n", Objects.requireNonNull(message));
 
                 if (debug && (t != null)) {
                     System.err.println("[DEBUG] Warning details:");
@@ -283,7 +284,7 @@ public final class Main {
              * @see net.yetamine.pet4bnd.feedback.Feedback#info(java.lang.String)
              */
             public void info(String message) {
-                System.err.println(message);
+                System.err.println(Objects.requireNonNull(message));
             }
         };
     }

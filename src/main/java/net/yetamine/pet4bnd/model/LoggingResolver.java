@@ -31,7 +31,7 @@ public final class LoggingResolver extends VersionResolver {
     protected boolean constraintViolated(PackageExport export) {
         final PackageVersion version = export.version();
         final String f = "Package '%s': target version %s violates version constraint %s.";
-        feedback.accept(String.format(f, export.packageName(), version.resolution(), version.constraint()));
+        feedback.accept(String.format(f, export.packageName(), version.resolution(), version.constraint().get()));
         return false;
     }
 
@@ -42,7 +42,6 @@ public final class LoggingResolver extends VersionResolver {
     protected void constraintViolated() {
         final BundleVersion version = bundle().version();
         final String f = "Target bundle version %s violates version restriction to %s.";
-        feedback.accept(String.format(f, version.resolution(), version.constraint()));
+        feedback.accept(String.format(f, version.resolution(), version.constraint().get()));
     }
-
 }

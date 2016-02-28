@@ -9,7 +9,7 @@ public interface Feedback {
      * Reports an error.
      *
      * @param message
-     *            the message
+     *            the message. It must not be {@code null}.
      * @param t
      *            the related exception if available
      */
@@ -19,17 +19,27 @@ public interface Feedback {
      * Reports an error.
      *
      * @param message
-     *            the message
+     *            the message. It must not be {@code null}.
      */
     default void fail(String message) {
         fail(message, null);
     }
 
     /**
+     * Reports an error.
+     *
+     * @param t
+     *            the related exception. It must not be {@code null}.
+     */
+    default void fail(Throwable t) {
+        fail(t.getMessage(), t);
+    }
+
+    /**
      * Reports a warning.
      *
      * @param message
-     *            the message
+     *            the message. It must not be {@code null}.
      * @param t
      *            the related exception if available
      */
@@ -38,8 +48,18 @@ public interface Feedback {
     /**
      * Reports a warning.
      *
+     * @param t
+     *            the related exception. It must not be {@code null}.
+     */
+    default void warn(Throwable t) {
+        warn(t.getMessage(), t);
+    }
+
+    /**
+     * Reports a warning.
+     *
      * @param message
-     *            the message
+     *            the message. It must not be {@code null}.
      */
     default void warn(String message) {
         warn(message, null);
@@ -49,7 +69,7 @@ public interface Feedback {
      * Reports an informational message.
      *
      * @param message
-     *            the message
+     *            the message. It must not be {@code null}.
      */
     void info(String message);
 

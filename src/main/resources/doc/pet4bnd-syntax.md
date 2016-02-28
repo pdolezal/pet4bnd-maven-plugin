@@ -7,44 +7,47 @@ The format of the package exports description file is very simple in order to be
 
 The file is a text file in the UTF-8 encoding and consisting of printable characters only. Non-printable characters should be treated as an error.
 
-The file contains a flat list of entries describing individual packages, which shall be exported, and a bundle-specific entry, which shares the syntax of the package entries, although not supporting all attributes (because they don't make sense for a bundle). An entry consists of one or two lines (the second line, if present, provides additional attributes for the package).
+The file contains a flat list of entries that define either package groups (with `$bundle` being a special case of a package group, implicitly binding all packages), or a package exports. The file may yet contain comments and blank lines (both not significant), whitespace is not significant except for line endings as the file format is line-oriented.
 
 
 ## Grammar ##
 
-Whitespace not significant, except for line endings, and with this assumption, the grammar could be expressed as these few rules:
+With the assumption of leaving the insignificant whitespace the grammar could be expressed as these few rules:
 
 ```
-FILE            ::= (COMMENT | ENTRY | EOL)*
+FILE            ::= (COMMENT | DEFINITION | EOL)*
 COMMENT         ::= '#' {printable character}* EOL
-ENTRY           ::= BUNDLE | PACKAGE
+DEFINITION      ::= GROUP | EXPORT
 EOL             ::= {line ending}
 
-BUNDLE          ::= '$bundle-version' BASELINE CONSTRAINT? CHANGE? EOL
-PACKAGE         ::= EXPORT ATTRIBUTES?
+GROUP           ::= GNAME ':' VERSION CONSTRAINT? CHANGE? EOL
+EXPORT          ::= PACKAGE ATTRIBUTES?
 
-EXPORT          ::= {package name} ( BASELINE | 'inherit' ) CONSTRAINT? CHANGE? EOL
+PACKAGE         ::= PNAME ':' ( VERSION | GNAME ) CONSTRAINT? CHANGE? EOL
 ATTRIBUTES      ::= '+' {attributes} EOL
 
-BASELINE        ::= ':' VERSION
+GNAME           ::= {name starting with $}
+PNAME           ::= {package name}
+
 CONSTRAINT      ::= '<' VERSION
 CHANGE          ::= '@' ( 'major' | 'minor' | 'micro' | 'none' )
+VERSION         ::= {version in the format major(.minor(.micro(.qualifier)?)?)?}
 ```
 
 
 ## Example ##
 
 ```
-$bundle-version: 1.2.3 < 2.0.0
+$bundle: 1.2.3 < 2.0.0
 
 foo.bar: 2.1.3 < 3.0.0 @ minor
 foo.baz: 1.1.2         @ none
 + x-demo:=true
+
+foo.boo: $bundle
 ```
 
 
 ## Semantics ##
 
-All directives may appear at most once. The `$bundle-version` directive is mandatory and must appear (once as implied by the previous sentence).
-
-The `inherit` token within an export directive means that the package version shall be inherited from the bundle version after resolving.
+All definitions may appear at most once. The `$bundle` directive is mandatory and must appear (once as implied by the previous sentence). A group name reference in an export must refer to a group that has been defined already, it means that group definitions must precede the points of their use.

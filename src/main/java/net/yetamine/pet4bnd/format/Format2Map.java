@@ -41,7 +41,7 @@ public final class Format2Map implements Persistable {
             p.attributes().ifPresent(a -> view.put(packageName + "#attributes", a));
         });
 
-        view.put("$bundle-version", definition.version().resolution().toString());
+        view.put("$bundle", definition.version().resolution().toString());
         content = Collections.unmodifiableMap(view);
     }
 

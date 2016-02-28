@@ -8,15 +8,15 @@ import java.util.stream.Collectors;
 /**
  * Provides a line representation which consists of multiple fragments.
  */
-final class LineNode implements Fragment {
+final class TextLine implements TextFragment {
 
     /** Fragments of this line. */
-    private final List<Fragment> fragments = new ArrayList<>();
+    private final List<TextFragment> fragments = new ArrayList<>();
 
     /**
      * Creates a new instance.
      */
-    public LineNode() {
+    public TextLine() {
         // Default constructor
     }
 
@@ -28,15 +28,15 @@ final class LineNode implements Fragment {
         switch (fragments.size()) {
             // @formatter:off
             case 0 : return "";
-            case 1 : return Fragment.format(fragments.get(0));
+            case 1 : return TextFragment.toString(fragments.get(0));
             // @formatter:on
         }
 
-        return fragments.stream().map(f -> Fragment.format(f)).collect(Collectors.joining());
+        return fragments.stream().map(f -> TextFragment.toString(f)).collect(Collectors.joining());
     }
 
     /**
-     * @see net.yetamine.pet4bnd.model.format.Fragment#format()
+     * @see net.yetamine.pet4bnd.model.format.TextFragment#format()
      */
     public String format() {
         return toString();
@@ -50,7 +50,7 @@ final class LineNode implements Fragment {
      *
      * @return this instance
      */
-    public LineNode append(Fragment fragment) {
+    public TextLine append(TextFragment fragment) {
         fragments.add(fragment);
         return this;
     }
@@ -63,7 +63,7 @@ final class LineNode implements Fragment {
      *
      * @return this instance
      */
-    public LineNode append(String fragment) {
+    public TextLine append(String fragment) {
         Objects.requireNonNull(fragment);
         return append(() -> fragment);
     }
@@ -77,7 +77,7 @@ final class LineNode implements Fragment {
      *
      * @return the list of fragments of this line
      */
-    public List<Fragment> fragments() {
+    public List<TextFragment> fragments() {
         return fragments;
     }
 }

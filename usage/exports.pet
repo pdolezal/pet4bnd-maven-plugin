@@ -1,9 +1,9 @@
 # A demo pet4bnd configuration which can be used for experimenting.
 
-# Comment out $bundle-version to disable any bundle version tracking and 
-# constraint.
+$bundle: 1.2.3 < 3.0.0
 
-$bundle-version: 1.2.3 < 3.0.0
+# Definition of a version group
+$greetings: 1.1.5
 
 # Notice that the packages do not have any version constraints. It is often
 # not needed when the bundle version is constrained, because incrementing a 
@@ -11,10 +11,11 @@ $bundle-version: 1.2.3 < 3.0.0
 # the bundle version is constrained, then its constraint implies the maximal 
 # increment of package versions.
 
-net.yetamine.pet4bnd.demo: inherit
+net.yetamine.pet4bnd.demo: $bundle
 + x-demo:=true
 
-net.yetamine.pet4bnd.demo.greeting: 1.1.5 @ minor
+# Using a version group
+net.yetamine.pet4bnd.demo.greeting: $greetings @ minor
 
 # And yet some package with an explicit constraint
 net.yetamine.pet4bnd.demo.messages: 2.3.5 < 2.4.0 @ micro

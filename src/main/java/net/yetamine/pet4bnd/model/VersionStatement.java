@@ -1,5 +1,7 @@
 package net.yetamine.pet4bnd.model;
 
+import java.util.Optional;
+
 import net.yetamine.pet4bnd.version.Version;
 import net.yetamine.pet4bnd.version.VersionVariance;
 
@@ -9,43 +11,64 @@ import net.yetamine.pet4bnd.version.VersionVariance;
 public interface VersionStatement {
 
     /**
-     * Tests if the effective version is valid with the respect to the
-     * constraint.
+     * Tests if the given version is valid with the respect to the constraint.
      *
-     * @return {@code true} if no constraint exists or the effective version is
-     *         below the constraint
+     * @param version
+     *            the version to test. It must not be {@code null}.
+     *
+     * @return {@code true} if no constraint exists or the given version
+     *         satisfies the constraint
      */
-    default boolean test() {
-        final Version constraint = constraint();
-        return (constraint == null) || (resolution().compareTo(constraint) < 0);
+    default boolean test(Version version) {
+        return constraint().map(c -> version.compareTo(c) < 0).orElse(Boolean.TRUE);
     }
 
     /**
-     * Overrides the effective version.
+     * Tests if the version resolution is valid with the respect to the
+     * constraint.
+     *
+     * @return {@code true} if no constraint exists or the version resolution
+     *         satisfies the constrain
+     */
+    default boolean test() {
+        return test(resolution());
+    }
+
+    /**
+     * Restores the baseline from the resolution.
+     *
+     * <p>
+     * The default implementation sets the baseline and resets the variance.
+     */
+    default void restore() {
+        baseline(resolution());
+        variance().ifPresent(v -> variance(VersionVariance.NONE));
+    }
+
+    /**
+     * Sets the version resolution.
      *
      * @param value
-     *            the value to set. It may be {@code null} to restore default
-     *            resolution (i.e., deriving the result from the baseline).
+     *            the value to set. It may be {@code null} to enable the default
+     *            resolution algorithm.
      */
     void resolve(Version value);
 
     /**
-     * Returns the effective version.
+     * Returns the version resolution.
      *
      * <p>
-     * Until overridden, the result is the baseline with the variance applied,
-     * or when the baseline is inherited, then the inherited effective version
-     * (hence ignoring the local variance then).
+     * Until overridden, the method shall use the default resolution algorithm,
+     * which derives the result from the other properties.
      *
-     * @return the effective version
+     * @return the version resolution
      */
     Version resolution();
 
     /**
      * Returns the version baseline.
      *
-     * @return the version baseline, or {@code null} if the baseline shall be
-     *         inherited
+     * @return the version baseline
      */
     Version baseline();
 
@@ -53,18 +76,17 @@ public interface VersionStatement {
      * Sets the version baseline.
      *
      * @param value
-     *            the version baseline to set. It may be {@code null} if no the
-     *            value shall be rather inherited (if possible). If inheritance
-     *            is not applicable, the current value shall be preserved.
+     *            the version baseline to set. It must not be {@code null}.
      */
     void baseline(Version value);
 
     /**
      * Returns the version constraint.
      *
-     * @return the version constraint, or {@code null} if no constraint exists
+     * @return the version constraint, or an empty container if no constraint
+     *         exists
      */
-    Version constraint();
+    Optional<Version> constraint();
 
     /**
      * Sets the version constraint.
@@ -76,19 +98,19 @@ public interface VersionStatement {
     void constraint(Version value);
 
     /**
-     * Returns the version variance.
+     * Returns the version baseline variance.
      *
-     * @return the version variance, or {@code null} if no variance given and
-     *         the effective version should be equal to the baseline always
+     * @return the version variance, or an empty container if no variance given
+     *         and the version resolution should be equal to the baseline always
      */
-    VersionVariance variance();
+    Optional<VersionVariance> variance();
 
     /**
-     * Sets the version variance.
+     * Sets the version baseline variance.
      *
      * @param value
-     *            the version variance to set. It may be {@code null} for
-     *            disabling the variance influence.
+     *            the version baseline variance to set. It may be {@code null}
+     *            for disabling the variance influence (i.e., fix the baseline)
      */
     void variance(VersionVariance value);
 }

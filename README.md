@@ -29,12 +29,13 @@ This section provides a quick introduction focusing on the two most important th
 The package exports description for the *pet4bnd* can be found in the *exports.pet* file by default. The file could have content like this:
 
 ```
-$bundle-version: 1.2.0
+$bundle: 1.2.0
 
 foo.bar: 1.1.0 < 2.0.0 @ minor
 + provides:=true
 
-foo.baz: 1.1.1 @ major
+foo.baz: 1.1.1   @ major
+foo.boo: $bundle @ minor
 ```
 
 Even without telling much about the format, one could guess following:
@@ -45,6 +46,7 @@ Even without telling much about the format, one could guess following:
 * The packages have different versions: *foo.bar* has 1.1.0 and *foo.baz* has 1.1.1.
 * The version of *foo.bar* must stay below 2.0.0 (perhaps version 2.0.0 has been released already).
 * And there were some changes: *foo.bar* underwent a minor change, while *foo.baz* underwent a major change.
+* Well, it seems that it is possible to inherit the version information like *foo.boo* does.
 * Finally, there is a line related to *foo.bar*, which looks like an attribute list.
 
 This guess would be quite correct. Names of the packages to export are separated with `:` (a colon) from the version information. Any additional attributes of an export should follow on the next line after `+` (a plus sign). Whitespace is not significant as well as comments; a comment starts with `#` (the hash sign) and ends with the line. A comment may appear on the line with the version information, but attributes can't contain any comments because the whole line should be used as the attribute list.
@@ -57,7 +59,9 @@ A package version description consists of several components in this order:
 
 The baseline is mandatory, other parts are optional. The baseline is the version of the package in the previous release (version 0.0.0 shall be used for yet unreleased package). Baseline combined with the change information results in the actual package version; if no change information is present, the version baseline is considered fixed for the tool. If there is any constraint, the actual version must stay below. This provides a safety belt against releasing a package modification under an existing version (useful for branching projects).
 
-What about the `$bundle-version` line? It similar to a package version, but it applies to the whole bundle. The change information for a bundle means the minimal version change to happpen (perhaps due to manually managed versions). A definition must contain `$bundle-version` and it may contain some package exports, but without duplications. 
+What about the `$bundle` line? It similar to a package version, but it applies to the whole bundle. The change information for a bundle means the minimal version change to happpen (perhaps due to manually managed versions). A definition must contain `$bundle` and it may contain some package exports, but without duplications.
+
+The `$bundle` definition is special because if concerns all packages. However, it is a special case of a more general construct: a *version group*. A version group allows to define a version for a group of packages at once, while any change of the group or any of the packages in the group affects the group's target version number. This feature can help when a group of packages should have the same version even if they have different change information. A version group definition looks similar to an export definition, just the name must start with `$` (a dollar) and it must not refer to another group like an export.
 
 
 ### Maven integration ###

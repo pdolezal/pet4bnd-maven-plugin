@@ -3,6 +3,7 @@ package net.yetamine.pet4bnd.mojo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import net.yetamine.pet4bnd.model.Bundle;
@@ -66,22 +67,23 @@ public final class RefreshMojo extends AbstractPet4BndMojo {
      * @param baseline
      *            the version baseline to adjust. It must not be {@code null}.
      * @param constraint
-     *            the optional constraint. It may be {@code null} if none.
+     *            the optional constraint. It must not be {@code null}.
      *
      * @return the next snapshot version
      *
      * @throws MojoExecutionException
-     *             if the constraint does not allow to raise the baseline
-     *             version
+     *             if the constraint does not allow to raise the version
+     *             baseline
      */
-    private static Version computeTargetVersion(Version baseline, Version constraint) throws MojoExecutionException {
-        if (constraint == null) { // No constraint, use the next major version
+    private static Version computeTargetVersion(Version baseline, Optional<Version> constraint) throws MojoExecutionException {
+        if (!constraint.isPresent()) { // No constraint, use the next major version
             return VersionVariance.MAJOR.apply(baseline);
         }
 
+        final Version versionConstraint = constraint.get();
         return Stream.of(VersionVariance.MAJOR, VersionVariance.MINOR, VersionVariance.MICRO)   // Try all adequate version changes, from the major one
                 .map(variance -> variance.apply(baseline))                                      // Apply to get the candidate version
-                .filter(version -> version.compareTo(constraint) < 0)                           // The candidate version must still be constrained!
+                .filter(version -> version.compareTo(versionConstraint) < 0)                    // The candidate version must still be constrained!
                 .findFirst().orElseThrow(() -> {
                     return new MojoExecutionException("Version constraint effectively freezes the version.");
                 });

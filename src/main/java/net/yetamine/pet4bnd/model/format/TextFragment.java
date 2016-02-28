@@ -3,13 +3,13 @@ package net.yetamine.pet4bnd.model.format;
 /**
  * Represents a formattable text fragment.
  */
-interface Fragment {
+interface TextFragment {
 
     /**
      * Formats the content of this instance to a string value.
      *
-     * @return the formatted content, or an empty string if no suitable content
-     *         is available
+     * @return the formatted content, or {@code null} if no formatting possible
+     *         or the result shall be omitted
      */
     String format();
 
@@ -22,7 +22,14 @@ interface Fragment {
      * @return the result of the formatting, an empty string if the value is
      *         {@code null}
      */
-    static String format(Fragment value) {
-        return (value != null) ? value.format() : "";
+    static String toString(TextFragment value) {
+        if (value != null) {
+            final String result = value.format();
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return "";
     }
 }
