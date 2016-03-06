@@ -26,6 +26,10 @@ public final class GenerateMojo extends AbstractPet4BndMojo {
     @Parameter(defaultValue = "${pet4bnd.source}", property = "pet4bnd.source", required = false)
     private String source;
 
+    /** Generate the bundle version. */
+    @Parameter(defaultValue = "release", required = false)
+    private String bundleVersion;
+
     /** Requiring to be verbose. */
     @Parameter(defaultValue = "${pet4bnd.verbose}", property = "pet4bnd.verbose", required = false)
     private boolean verbose = true;
@@ -46,7 +50,8 @@ public final class GenerateMojo extends AbstractPet4BndMojo {
 
         log.info(String.format("Loading definition file: %s", sourcePath));
         final Bundle definition = resolveDefinition(parseSource(sourcePath));
-        final Format2Bnd format = new Format2Bnd(definition);
+        final boolean bundleVersionRequired = isBundleVersionRequired();
+        final Format2Bnd format = new Format2Bnd(definition, bundleVersionRequired);
 
         try {
             log.info(String.format("Generating bnd file: %s", outputPath));
@@ -68,5 +73,49 @@ public final class GenerateMojo extends AbstractPet4BndMojo {
         }
 
         log.info(String.format("Target bundle version: %s", definition.version().resolution()));
+        if (!bundleVersionRequired) { // Report it for completeness (could be confusing otherwise)
+            log.info("Target bundle version omitted from the output as requested.");
+        }
+    }
+
+    /**
+     * Returns if the project should generate the Bundle-Version directive.
+     *
+     * @return {@code true} if the project settings shall result in generating
+     *         the Bundle-Version directive
+     */
+    private boolean isBundleVersionRequired() {
+        switch (bundleVersion.toLowerCase()) {
+            case "always":
+            case "true":
+            case "yes":
+                return true;
+
+            case "snapshot":
+                return isProjectVersionSnapshot();
+
+            default:
+                getLog().warn(String.format("Unknown bundle version directive '%s'.", bundleVersion));
+                // Fall through
+
+            case "release": // This is the usual default
+                return !isProjectVersionSnapshot();
+
+            case "never":
+            case "false":
+            case "no":
+                return false;
+
+        }
+    }
+
+    /**
+     * Tests if the project's version is a SNAPSHOT.
+     *
+     * @return {@code true} if the project's version is a SNAPSHOT
+     */
+    private boolean isProjectVersionSnapshot() {
+        final String version = getProject().getVersion();
+        return ((version != null) && version.endsWith("-SNAPSHOT"));
     }
 }

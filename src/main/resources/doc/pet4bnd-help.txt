@@ -8,11 +8,12 @@ may appear: help, -help, --help, -h, -?, /h, /?
 Using any of the other OPTIONS performs the actions according to the OPTIONS. At
 least one argument is always required. Following OPTIONS may appear:
 
--bundle-version     Print the target bundle version to STDOUT
+-bundle-version     Render the target bundle version to the specified .bnd FILE
 -debug              Print debugging information on an error
 -pet FILE           Use the specified source FILE ('./exports.pet' is default)
 -bnd FILE           Render the specified .bnd FILE
 -properties FILE    Render the specified .properties FILE
+-report             Print the target bundle version to STDOUT
 -restore            Restore the baseline versions in the source file
 -verbose            Print all details
 

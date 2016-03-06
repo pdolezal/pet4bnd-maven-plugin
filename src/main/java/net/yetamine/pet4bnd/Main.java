@@ -25,6 +25,7 @@ import net.yetamine.pet4bnd.model.LoggingResolver;
 import net.yetamine.pet4bnd.model.VersionResolver;
 import net.yetamine.pet4bnd.model.format.PetFormat;
 import net.yetamine.pet4bnd.model.format.PetParser;
+import net.yetamine.pet4bnd.version.Version;
 
 /**
  * Implementation of the command line interface of the tool.
@@ -87,6 +88,7 @@ public final class Main {
         boolean bundleVersion = false;
         boolean restore = false;
         boolean verbose = false;
+        boolean report = false;
         boolean debug = false;
 
         Path petFile = null;
@@ -122,6 +124,10 @@ public final class Main {
 
                     case "-properties":
                         propertiesFile = Paths.get(it.next());
+                        break;
+
+                    case "-report":
+                        report = true;
                         break;
 
                     case "-restore":
@@ -173,9 +179,11 @@ public final class Main {
         }
 
         try { // Produce the output
+            final Version version = description.version().resolution();
+
             if (bndFile != null) {
                 feedback.info(String.format("Generating bnd file: %s", bndFile));
-                final Format2Bnd format = new Format2Bnd(description);
+                final Format2Bnd format = new Format2Bnd(description, bundleVersion);
                 format.store(bndFile);
 
                 if (verbose) {
@@ -203,9 +211,9 @@ public final class Main {
                 description.store(petFile);
             }
 
-            if (bundleVersion) {
+            if (report) {
                 feedback.info("Dumping the target bundle version.");
-                System.out.println(description.version().resolution());
+                System.out.println(version);
             }
         } catch (IOException e) {
             feedback.fail(e);
