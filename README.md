@@ -5,7 +5,7 @@ This repository contains the source for the *Package exports tracker for bnd*, o
 
 ## Motivation ##
 
-OSGi depends on using [semantic versioning][versioning] and OSGi practices recommends applying the versioning on the package level when every package should maintain its own version independent on the bundle that contains the package. While this recommendation has many positive effects, it is difficult to achive. One of the problems is that OSGi versioning schema lacks the concept of snapshot versions, or some other concept of a temporary version number. Then applying semantic versioning properly and on the package level becomes a real challenge. This tool helps tracking the changes on the package level, so that a correct and suitable version number for each package can be resolved when building the bundle for both snapshot or release purposes.  
+OSGi depends on using [semantic versioning][versioning] and OSGi practices recommends applying the versioning on the package level when every package should maintain its own version independent on the bundle that contains the package. While this recommendation has many positive effects, it is difficult to achive. One of the problems is that OSGi versioning schema lacks the concept of snapshot versions, or some other concept of a temporary version number. Then applying semantic versioning properly and on the package level becomes a real challenge. This tool helps tracking the changes on the package level, so that a correct and suitable version number for each package can be resolved when building the bundle for both snapshot or release purposes.
 
 [versioning]: https://www.osgi.org/wp-content/uploads/SemanticVersioning.pdf
 
@@ -16,7 +16,7 @@ The package exports description is usually contained in a POM file (when using t
 
 Let's explain on an example what the relaxed version change means: A package has been released with version 1.0.0 and changed during subsequent development twice, with both changes implying a major version increment. Therefore, the package should get version 2.0.0 after the first change and 3.0.0 after the seconds change. But because it is not released after the first change (only snapshot builds contain it), the second change should not increment the version number again, otherwise the next release would publish it with the version of 3.0.0, instead of 2.0.0. So, when finally a release build is created, the package should have version 2.0.0 in the build despite of two changes occurred during the development. With the version number contained in a project description like a POM file, it is a bit tricky to achieve: how a developer would know that the package has been changed already since the previous release and how much? It should not be required to always dig in the package change history to find this out.
 
-Therefore this tool maintains the package exports description in a relative form instead of using absolute version numbers; the relative form basically says *Package x.y.z underwent a minor change since the previous release*. The actual version numbers are generated for every build from the relative form. The developers still have to mark the changes, but in a simpler way. The separate relative form allows to keeps the actual version numbers as close to the expected release version as possible. It is merge-friendly and allows easy quick and dirty text manipulation as well (which might be a problem with POM or *.bnd* files). 
+Therefore this tool maintains the package exports description in a relative form instead of using absolute version numbers; the relative form basically says *Package x.y.z underwent a minor change since the previous release*. The actual version numbers are generated for every build from the relative form. The developers still have to mark the changes, but in a simpler way. The separate relative form allows to keeps the actual version numbers as close to the expected release version as possible. It is merge-friendly and allows easy quick and dirty text manipulation as well (which might be a problem with POM or *.bnd* files).
 
 
 ## Quick introduction ##
@@ -41,7 +41,7 @@ foo.boo: $bundle @ minor
 Even without telling much about the format, one could guess following:
 
 * The format is line-oriented.
-* There is some version for the bundle. 
+* There is some version for the bundle.
 * Two packages, *foo.bar* and *foo.baz*, shall be exported.
 * The packages have different versions: *foo.bar* has 1.1.0 and *foo.baz* has 1.1.1.
 * The version of *foo.bar* must stay below 2.0.0 (perhaps version 2.0.0 has been released already).
