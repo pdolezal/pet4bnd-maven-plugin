@@ -58,7 +58,7 @@ public final class Main {
     private static final int EXIT_OUTPUT = 3;
 
     /** Resource with the HELP content. */
-    private static final String RESOURCE_HELP = "/doc/pet4bnd-help.txt";
+    private static final String RESOURCE_HELP = "/module-resources/pet4bnd-help.txt";
     /** Resource with the MANIFEST of this archive. */
     private static final String RESOURCE_MANIFEST = "/META-INF/MANIFEST.MF";
 
@@ -347,11 +347,14 @@ public final class Main {
         final PrintStream out = System.out;
 
         try (InputStream is = Main.class.getResourceAsStream(RESOURCE_MANIFEST)) {
+            out.println("Package exports tracker for bnd");
+            out.println("-------------------------------");
+            out.println("A tool for generating bnd files");
             final Attributes attributes = new Manifest(is).getMainAttributes();
             final String product = attributes.getValue("Implementation-Title");
             final String version = attributes.getValue("Implementation-Version");
             final String vendor = attributes.getValue("Implementation-Vendor-Id");
-            out.format("%s:%s:%s%nA tool for generating bnd exports%n%n", vendor, product, version);
+            out.format("%s:%s:%s%n%n", vendor, product, version);
         } catch (NullPointerException | IOException e) {
             assert false; // Ignore missing manifest
         }
