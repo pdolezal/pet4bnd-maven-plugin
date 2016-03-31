@@ -32,9 +32,11 @@ public final class Version implements Serializable, Comparable<Version> {
     /** Representation of version <i>0.0.0</i>. */
     public static final Version ZERO = new Version(0, 0, 0);
 
+    // @formatter:off
     /** Pattern for parsing a version string. */
-    private static final Pattern PATTERN // @formatter:break
+    private static final Pattern PATTERN
     = Pattern.compile("(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<micro>\\d+))?(\\.(?<qualifier>\\S+))?");
+    // @formatter:on
 
     /** Major version number. */
     private final int major;
@@ -63,8 +65,14 @@ public final class Version implements Serializable, Comparable<Version> {
         minor = check(min, "Minor version must not negative.");
         micro = check(mic, "Micro version must not negative.");
 
-        if ((qual != null) && qual.isEmpty()) {
-            throw new IllegalArgumentException("Qualifier may be missing, but not empty.");
+        if (qual != null) {
+            if (qual.isEmpty()) {
+                throw new IllegalArgumentException("Qualifier may be missing, but not empty.");
+            }
+
+            if (qual.chars().anyMatch(Character::isWhitespace)) {
+                throw new IllegalArgumentException("Qualifier may not contain whitespace characters.");
+            }
         }
 
         qualifier = qual;
