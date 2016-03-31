@@ -117,8 +117,7 @@ public final class Main {
 
             try {
                 if (isHelpOption(option)) {
-                    throw new IllegalArgumentException(
-                            String.format("HELP options may appear can't be used with other options."));
+                    throw new IllegalArgumentException("HELP options can't be used with other options.");
                 }
 
                 switch (option) {
