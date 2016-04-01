@@ -1,0 +1,4 @@
+# Duplicate of $bundle
+
+$bundle: 1.2.3
+$bundle: 2.0.0

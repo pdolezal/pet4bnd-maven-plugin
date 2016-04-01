@@ -1,0 +1,21 @@
+# A demo pet4bnd configuration which can be used for experimenting.
+
+$bundle: 1.3.0 < 3.0.0 @ none
+
+# Definition of a version group
+$greetings: 1.1.5
+
+# Notice that the packages do not have any version constraints. It is often
+# not needed when the bundle version is constrained, because incrementing a 
+# package version implies an appropriate increment of the bundle version; if
+# the bundle version is constrained, then its constraint implies the maximal 
+# increment of package versions.
+
+net.yetamine.pet4bnd.demo: $bundle
++ x-demo:=true
+
+# Using a version group
+net.yetamine.pet4bnd.demo.greeting: $greetings @ none
+
+# And yet some package with an explicit constraint
+net.yetamine.pet4bnd.demo.messages: 2.3.6 < 2.4.0 @ none
