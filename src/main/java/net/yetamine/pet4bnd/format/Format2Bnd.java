@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +61,8 @@ public final class Format2Bnd implements Persistable {
     private final List<String> exports;
     /** Line length for formatting. */
     private final int lineLength;
+    /** Timestamp source. */
+    private final Clock timestamp;
 
     /**
      * Creates a new instance.
@@ -76,6 +79,23 @@ public final class Format2Bnd implements Persistable {
         lineLength = formatExports(packageExports, lines::add);
         exports = Collections.unmodifiableList(lines);
         bundleVersion = bundleVersionOverride;
+        timestamp = Clock.systemUTC();
+    }
+
+    /**
+     * Creates a new instance from the given instance.
+     *
+     * @param source
+     *            the source instance. It must not be {@code null}.
+     * @param clock
+     *            the clock for the timestamp. It may be {@code null} for no
+     *            timestamp
+     */
+    private Format2Bnd(Format2Bnd source, Clock clock) {
+        bundleVersion = source.bundleVersion;
+        lineLength = source.lineLength;
+        exports = source.exports;
+        timestamp = clock;
     }
 
     /**
@@ -98,6 +118,20 @@ public final class Format2Bnd implements Persistable {
      */
     public Format2Bnd(Bundle definition) {
         this(definition, definition.version().resolution());
+    }
+
+    /**
+     * Returns a new instance based on this instance that uses the given clock
+     * for the timestamp.
+     *
+     * @param clock
+     *            the clock for the timestamp. It may be {@code null} for no
+     *            timestamp
+     *
+     * @return the new instance
+     */
+    public Format2Bnd timestamp(Clock clock) {
+        return new Format2Bnd(this, clock);
     }
 
     /**
@@ -124,9 +158,13 @@ public final class Format2Bnd implements Persistable {
         // Generate the bnd file
         sink.write(COMMENT_GENERATOR);
         sink.newLine();
-        sink.write(COMMENT_TIMESTAMP);
-        sink.write(Instant.now().toString());
-        sink.newLine();
+
+        if (timestamp != null) {
+            sink.write(COMMENT_TIMESTAMP);
+            sink.write(Instant.now(timestamp).toString());
+            sink.newLine();
+        }
+
         sink.newLine();
 
         if (bundleVersion != null) {
