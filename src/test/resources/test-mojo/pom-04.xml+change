@@ -1,0 +1,9 @@
+<mvn:project xmlns:mvn="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <mvn:modelVersion>4.0.0</mvn:modelVersion>
+
+    <mvn:groupId>net.yetamine</mvn:groupId>
+    <mvn:artifactId>pet4bnd-maven-plugin</mvn:artifactId>
+    <mvn:version>nonsense</mvn:version>
+    <mvn:packaging>maven-plugin</mvn:packaging>
+</mvn:project>

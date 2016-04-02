@@ -1,0 +1,4 @@
+pom-01, 1.0.0,          2.0.0-SNAPSHOT
+pom-02, 1.2.3,          4.5.6
+pom-03, nonstring,      nonsense
+pom-04, nonstring,      nonsense
