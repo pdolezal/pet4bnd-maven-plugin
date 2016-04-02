@@ -163,10 +163,12 @@ final class PomVersionEditor implements Persistable {
         assert (offset > 0);
         assert (ending > offset);
         // The ending mark includes the whole ending element, we have to strip it off
-        versionEnding = content.lastIndexOf("<", ending);
+        versionEnding = content.lastIndexOf("</", ending);
         assert (offset <= versionEnding);
         assert (versionEnding <= ending);
-        versionOffset = offset;
+        // With namespaces, the offset is not right often, search for the end of the starting element
+        final int beginning = content.lastIndexOf('>', offset);
+        versionOffset = (0 <= beginning) ? beginning + 1: 0;
         version = content.substring(versionOffset, versionEnding);
     }
 
