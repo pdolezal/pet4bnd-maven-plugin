@@ -275,7 +275,7 @@ public final class Version implements Serializable, Comparable<Version> {
      * @return the version representation
      */
     private static Version from(Matcher matcher) {
-        final int major = Integer.valueOf(matcher.group("major"));
+        final int major = Integer.parseInt(matcher.group("major"));
         final String minor = matcher.group("minor");
         final String micro = matcher.group("micro");
         final String qualifier = matcher.group("qualifier");
@@ -313,6 +313,6 @@ public final class Version implements Serializable, Comparable<Version> {
      * @return the version number
      */
     private static int convert(String version) {
-        return (version != null) ? Integer.valueOf(version) : 0;
+        return (version != null) ? Integer.parseInt(version) : 0;
     }
 }
