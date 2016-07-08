@@ -50,6 +50,10 @@
         <url>https://github.com/pdolezal/pet4bnd-maven-plugin.git</url>
     </scm>
 
+    <properties>
+        <findbugs.excludeFilterFile>${project.basedir}/cfg/findbugs/exclude-filter.xml</findbugs.excludeFilterFile>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
