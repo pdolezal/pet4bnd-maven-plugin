@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
-     <Match>
-       <Class name="net.yetamine.pet4bnd.mojo.GenerateMojo" />
-       <Method name="isBundleVersionRequired" />
-       <Bug pattern="SF_SWITCH_FALLTHROUGH" />
-     </Match>
+    <Match>
+        <Class name="net.yetamine.pet4bnd.mojo.GenerateMojo" />
+        <Method name="isBundleVersionRequired" />
+        <Bug pattern="SF_SWITCH_FALLTHROUGH" />
+    </Match>
 </FindBugsFilter>
