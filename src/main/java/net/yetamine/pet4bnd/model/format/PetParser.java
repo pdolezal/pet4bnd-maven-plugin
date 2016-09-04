@@ -337,13 +337,13 @@ public final class PetParser implements Consumer<CharSequence> {
      */
     private void accept(LineParser parser) throws ParseException {
         // Parse comments and blank lines
-        if (parser.parseIgnorable()) {
+        if (parser.ignorable()) {
             representation.add(parser.text());
             return;
         }
 
         // Parse attributes for a pending export
-        final String attributes = parser.parseAttributes();
+        final String attributes = parser.attributes();
 
         if (attributes != null) {
             if (closePendingExport(attributes)) {
@@ -358,7 +358,7 @@ public final class PetParser implements Consumer<CharSequence> {
         closePendingExport(null); // Nothing like attributes, close the pending export if any
 
         // Parse a group declaration
-        final String group = parser.parseGroupDeclaration();
+        final String group = parser.groupDeclaration();
 
         if (group != null) { // It is a group
             if (versionGroups.containsKey(group)) {
@@ -376,22 +376,22 @@ public final class PetParser implements Consumer<CharSequence> {
                 statement = new PackageGroupDefinition(group);
             }
 
-            statement.baseline(parser.requireBaseline(() -> statement.baseline().toString()));
-            parseVersionDetails(parser, statement);
+            statement.baseline(parser.baseline(() -> statement.baseline().toString()));
+            versionDetails(parser, statement);
             versionGroups.put(group, statement);
             representation.add(parser.text());
             return;
         }
 
         // Parse an export declaration
-        final String export = parser.parseExportDeclaration();
+        final String export = parser.exportDeclaration();
         if (export == null) { // Which is mandatory as the last option left
             throw parser.failure("Unknown construct found.");
         }
 
         final PackageVersion version = new PackageVersionDefinition();
-        requireVersionBaseline(parser, version);
-        parseVersionDetails(parser, version);
+        versionBaseline(parser, version);
+        versionDetails(parser, version);
         createPendingExport(export, version);
         representation.add(parser.text());
     }
@@ -408,7 +408,7 @@ public final class PetParser implements Consumer<CharSequence> {
      * @throws ParseException
      *             if the parsing fails
      */
-    private void requireVersionBaseline(LineParser parser, PackageVersion version) throws ParseException {
+    private void versionBaseline(LineParser parser, PackageVersion version) throws ParseException {
         // Make the formater for the version baseline
         final TextFragment baselineFormatter = () -> {
             return version.inheritance().map(s -> {
@@ -426,9 +426,9 @@ public final class PetParser implements Consumer<CharSequence> {
         };
 
         // Parse the baseline as a group reference
-        final String reference = parser.parseGroupReference(baselineFormatter);
+        final String reference = parser.groupReference(baselineFormatter);
         if (reference == null) { // If no reference, the version baseline must be here
-            version.baseline(parser.requireBaseline(baselineFormatter));
+            version.baseline(parser.baseline(baselineFormatter));
             return;
         }
 
@@ -454,16 +454,16 @@ public final class PetParser implements Consumer<CharSequence> {
      * @throws ParseException
      *             if the parsing fails
      */
-    private void parseVersionDetails(LineParser parser, VersionStatement statement) throws ParseException {
-        statement.constraint(parser.parseConstraint(() -> {
+    private void versionDetails(LineParser parser, VersionStatement statement) throws ParseException {
+        statement.constraint(parser.constraint(() -> {
             return statement.constraint().map(Object::toString).orElse(null);
         }));
 
-        statement.variance(parser.parseVariance(() -> {
+        statement.variance(parser.variance(() -> {
             return statement.variance().map(Object::toString).map(String::toLowerCase).orElse(null);
         }));
 
-        if (!parser.consumeTrailing()) { // Record the trailing part, hence it may just warn
+        if (!parser.trailing()) { // Record the trailing part, hence it may just warn
             warn("Unknown construct found at the end of the line.");
         }
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.yetamine.pet4bnd.testing;
+package net.yetamine.pet4bnd.support;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -26,36 +26,61 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Support utilities for testing.
+ * Represents a testing resource.
  */
-public final class TestResources {
+public final class Resource {
+
+    /** Name of the resource. */
+    private final String name;
 
     /**
-     * Opens a resource as a stream.
+     * Creates a new instance.
      *
-     * @param resourceName
-     *            the name of the resource
+     * @param resource
+     *            the resource to represent. It must not be {@code null}.
+     */
+    public Resource(String resource) {
+        name = Objects.requireNonNull(resource);
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return String.format("Resource[%s]", name);
+    }
+
+    /**
+     * Returns the name of this resource.
+     *
+     * @return the name of this resource
+     */
+    public String name() {
+        return name;
+    }
+
+    /**
+     * Opens the resource as a stream.
      *
      * @return the stream for the resource
      *
      * @throws IOException
      *             if the resource is missing
      */
-    public static InputStream openInputStream(String resourceName) throws IOException {
-        final InputStream result = TestResources.class.getResourceAsStream(resourceName);
+    public InputStream inputStream() throws IOException {
+        final InputStream result = Resource.class.getResourceAsStream(name);
 
         if (result == null) {
-            throw new IOException(String.format("Missing resource '%s'.", resourceName));
+            throw new IOException(String.format("Missing resource '%s'.", name));
         }
 
         return result;
     }
 
     /**
-     * Opens a resource as a reader.
+     * Opens the resource as a reader.
      *
-     * @param resourceName
-     *            the name of the resource
      * @param charset
      *            the charset of the resource. It must not be {@code null}.
      *
@@ -64,16 +89,13 @@ public final class TestResources {
      * @throws IOException
      *             if the resource is missing
      */
-    public static BufferedReader openBufferedReader(String resourceName, Charset charset) throws IOException {
-        Objects.requireNonNull(charset);
-        return new BufferedReader(new InputStreamReader(openInputStream(resourceName), charset));
+    public BufferedReader bufferedReader(Charset charset) throws IOException {
+        Objects.requireNonNull(charset); // Evaluate before creating any stream
+        return new BufferedReader(new InputStreamReader(inputStream(), charset));
     }
 
     /**
-     * Loads a resource as a byte array.
-     *
-     * @param resourceName
-     *            the name of the resource
+     * Provides the resource as a byte array.
      *
      * @return the bytes of the resource, or {@code null} if the resource is
      *         missing
@@ -81,11 +103,11 @@ public final class TestResources {
      * @throws IOException
      *             if the resource is missing
      */
-    public static byte[] loadBytes(String resourceName) throws IOException {
+    public byte[] toBytes() throws IOException {
         final ByteArrayOutputStream result = new ByteArrayOutputStream();
 
         final byte[] buffer = new byte[1024];
-        try (InputStream is = TestResources.class.getResourceAsStream(resourceName)) {
+        try (InputStream is = Resource.class.getResourceAsStream(name)) {
             if (is == null) {
                 return null;
             }
@@ -99,29 +121,24 @@ public final class TestResources {
     }
 
     /**
-     * Loads a resource as a {@link Properties} instance.
-     *
-     * @param resourceName
-     *            the name of the resource
+     * Provides the resource as a {@link Properties} instance.
      *
      * @return the properties, or {@code null} if the resource is missing
      *
      * @throws IOException
      *             if the input could not be read
      */
-    public static Properties loadProperties(String resourceName) throws IOException {
-        try (InputStream is = TestResources.class.getResourceAsStream(resourceName)) {
+    public Properties toProperties() throws IOException {
+        final Properties result; // Keep this variable here to prevent FindBugs being confused
+        try (InputStream is = Resource.class.getResourceAsStream(name)) {
             if (is == null) {
                 return null;
             }
 
-            final Properties result = new Properties();
+            result = new Properties();
             result.load(is);
-            return result;
         }
-    }
 
-    private TestResources() {
-        throw new AssertionError();
+        return result;
     }
 }

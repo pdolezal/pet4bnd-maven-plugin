@@ -19,7 +19,6 @@ package net.yetamine.pet4bnd;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
@@ -41,6 +40,7 @@ import net.yetamine.pet4bnd.model.LoggingResolver;
 import net.yetamine.pet4bnd.model.VersionResolver;
 import net.yetamine.pet4bnd.model.format.PetFormat;
 import net.yetamine.pet4bnd.model.format.PetParser;
+import net.yetamine.pet4bnd.support.Resource;
 import net.yetamine.pet4bnd.version.Version;
 
 /**
@@ -58,9 +58,9 @@ public final class Main {
     private static final int EXIT_OUTPUT = 3;
 
     /** Resource with the HELP content. */
-    private static final String RESOURCE_HELP = "/module-resources/pet4bnd-help.txt";
+    private static final Resource RESOURCE_HELP = new Resource("/module-resources/pet4bnd-help.txt");
     /** Resource with the MANIFEST of this archive. */
-    private static final String RESOURCE_MANIFEST = "/META-INF/MANIFEST.MF";
+    private static final Resource RESOURCE_MANIFEST = new Resource("/META-INF/MANIFEST.MF");
 
     /** Default source path. */
     private static final Path DEFAULT_SOURCE = Paths.get("exports.pet");
@@ -178,7 +178,7 @@ public final class Main {
             }
 
             feedback.info(String.format("Loading source file: %s", petFile));
-            description = loadDescription(petFile, feedback);
+            description = description(petFile, feedback);
         } catch (NoSuchFileException e) {
             feedback.fail("Missing source file.");
             return EXIT_INPUT;
@@ -250,7 +250,7 @@ public final class Main {
      * @throws IOException
      *             if the input processing failed
      */
-    private static PetFormat loadDescription(Path source, Feedback feedback) throws IOException {
+    private static PetFormat description(Path source, Feedback feedback) throws IOException {
         final PetParser parser = PetFormat.parse(source, feedback);
 
         if (parser.errorCount() > 0) {
@@ -345,7 +345,7 @@ public final class Main {
     private static void printHelpContent() {
         final PrintStream out = System.out;
 
-        try (InputStream is = Main.class.getResourceAsStream(RESOURCE_MANIFEST)) {
+        try (InputStream is = RESOURCE_MANIFEST.inputStream()) {
             out.println("Package exports tracker for bnd");
             out.println("-------------------------------");
             out.println("A tool for generating bnd files");
@@ -358,9 +358,7 @@ public final class Main {
             assert false; // Ignore missing manifest
         }
 
-        // @formatter:off
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream(RESOURCE_HELP), StandardCharsets.UTF_8))) {
-        // @formatter:on
+        try (BufferedReader reader = RESOURCE_HELP.bufferedReader(StandardCharsets.UTF_8)) {
             for (String line; (line = reader.readLine()) != null;) {
                 out.println(line);
             }

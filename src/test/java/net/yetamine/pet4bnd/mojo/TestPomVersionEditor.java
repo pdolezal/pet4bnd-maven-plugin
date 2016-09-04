@@ -28,8 +28,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import net.yetamine.pet4bnd.testing.TestOutput;
-import net.yetamine.pet4bnd.testing.TestResources;
+import net.yetamine.pet4bnd.support.Resource;
 
 /**
  * Tests {@link PomVersionEditor}.
@@ -53,15 +52,15 @@ public final class TestPomVersionEditor {
     @Test(dataProvider = "resources")
     public void test(String resourceSet, String expectedVersion, String desiredVersion) throws Exception {
         final PomVersionEditor editor;
-        try (InputStream is = TestResources.openInputStream(resourceSet + ".xml")) {
+        try (InputStream is = new Resource(resourceSet + ".xml").inputStream()) {
             editor = new PomVersionEditor(is);
         }
 
         Assert.assertEquals(editor.version(), expectedVersion);
 
         editor.version(desiredVersion);
-        final byte[] result = TestOutput.toBytes(editor);
-        final byte[] expect = TestResources.loadBytes(resourceSet + ".xml+change");
+        final byte[] result = editor.toBytes();
+        final byte[] expect = new Resource(resourceSet + ".xml+change").toBytes();
         Assert.assertEquals(result, expect);
     }
 
@@ -71,7 +70,7 @@ public final class TestPomVersionEditor {
         final List<Object[]> result = new ArrayList<>();
 
         final Charset charset = StandardCharsets.UTF_8;
-        try (BufferedReader reader = TestResources.openBufferedReader("/test-mojo/poms", charset)) {
+        try (BufferedReader reader = new Resource("/test-mojo/poms").bufferedReader(charset)) {
             for (String line; (line = reader.readLine()) != null;) {
                 final String[] items = line.split("\\s*,\\s*");
 

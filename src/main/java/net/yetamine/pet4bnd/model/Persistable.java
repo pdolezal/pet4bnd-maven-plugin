@@ -16,6 +16,7 @@
 
 package net.yetamine.pet4bnd.model;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -50,5 +51,19 @@ public interface Persistable {
         try (OutputStream sink = Files.newOutputStream(path)) {
             persist(sink);
         }
+    }
+
+    /**
+     * Persists this instance to a byte array.
+     *
+     * @return the persisted data
+     *
+     * @throws IOException
+     *             if the output could not be written
+     */
+    default byte[] toBytes() throws IOException {
+        final ByteArrayOutputStream result = new ByteArrayOutputStream();
+        persist(result);
+        return result.toByteArray();
     }
 }

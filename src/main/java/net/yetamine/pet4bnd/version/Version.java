@@ -280,7 +280,7 @@ public final class Version implements Serializable, Comparable<Version> {
         final String micro = matcher.group("micro");
         final String qualifier = matcher.group("qualifier");
 
-        return new Version(major, convert(minor), convert(micro), qualifier);
+        return new Version(major, number(minor), number(micro), qualifier);
     }
 
     /**
@@ -312,7 +312,7 @@ public final class Version implements Serializable, Comparable<Version> {
      *
      * @return the version number
      */
-    private static int convert(String version) {
+    private static int number(String version) {
         return (version != null) ? Integer.parseInt(version) : 0;
     }
 }

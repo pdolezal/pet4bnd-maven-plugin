@@ -121,7 +121,7 @@ final class LineParser {
      *
      * @return the attribute specification, or {@code null} if none
      */
-    public String parseAttributes() {
+    public String attributes() {
         final Matcher matcher = PATTERN_ATTRIBUTES.matcher(line);
 
         if (parse(matcher)) {
@@ -144,7 +144,7 @@ final class LineParser {
      *
      * @return {@code true} if parsing successful
      */
-    public boolean parseIgnorable() {
+    public boolean ignorable() {
         final Matcher matcher = PATTERN_IGNORABLE.matcher(line);
 
         if (parse(matcher)) {
@@ -162,7 +162,7 @@ final class LineParser {
      * @return {@code true} if the trailing part contains no unexpected
      *         characters
      */
-    public boolean consumeTrailing() {
+    public boolean trailing() {
         // Check the trailing string (but do not store useless whitespace)
         final String trailing = line.subSequence(position, line.length()).toString();
         text.append(trailing); // Store trailing always
@@ -181,8 +181,8 @@ final class LineParser {
      * @return the identifier of the package, or {@code null} if the parser does
      *         not stand at a valid declaration
      */
-    public String parseExportDeclaration() {
-        return parseConstant(PATTERN_DECLARATION_EXPORT, "value");
+    public String exportDeclaration() {
+        return constant(PATTERN_DECLARATION_EXPORT, "value");
     }
 
     // Parse group declarations
@@ -197,8 +197,8 @@ final class LineParser {
      * @return the identifier of the group, or {@code null} if the parser does
      *         not stand at a valid declaration
      */
-    public String parseGroupDeclaration() {
-        return parseConstant(PATTERN_DECLARATION_GROUP, "value");
+    public String groupDeclaration() {
+        return constant(PATTERN_DECLARATION_GROUP, "value");
     }
 
     // Parse group references
@@ -217,7 +217,7 @@ final class LineParser {
      * @return the identifier of the group, or {@code null} if the parser does
      *         not stand at a valid reference
      */
-    public String parseGroupReference(TextFragment formatter) {
+    public String groupReference(TextFragment formatter) {
         Objects.requireNonNull(formatter);
 
         final Matcher matcher = PATTERN_DEFINITION_REFERENCE.matcher(line);
@@ -250,7 +250,7 @@ final class LineParser {
      * @throws ParseException
      *             if the parsing fails
      */
-    public Version requireBaseline(TextFragment formatter) throws ParseException {
+    public Version baseline(TextFragment formatter) throws ParseException {
         Objects.requireNonNull(formatter);
 
         if (line.length() <= position) { // Match the version baseline
@@ -260,7 +260,7 @@ final class LineParser {
         final Matcher matcher = PATTERN_DEFINITION_BASELINE.matcher(line);
 
         if (parse(matcher)) {
-            final Version result = requireVersion(matcher.group("value"));
+            final Version result = version(matcher.group("value"));
             position = matcher.end();
             text.append(formatter);
             return result;
@@ -287,13 +287,13 @@ final class LineParser {
      * @throws ParseException
      *             if the parsing fails
      */
-    public Version parseConstraint(TextFragment formatter) throws ParseException {
+    public Version constraint(TextFragment formatter) throws ParseException {
         Objects.requireNonNull(formatter);
 
         final Matcher matcher = PATTERN_DEFINITION_CONSTRAINT.matcher(line);
 
         if (parse(matcher)) {
-            final Version result = requireVersion(matcher.group("value"));
+            final Version result = version(matcher.group("value"));
             final String prefix = matcher.group("prefix");
 
             text.append(() -> {
@@ -331,7 +331,7 @@ final class LineParser {
      * @throws ParseException
      *             if the parsing fails
      */
-    public VersionVariance parseVariance(TextFragment formatter) throws ParseException {
+    public VersionVariance variance(TextFragment formatter) throws ParseException {
         Objects.requireNonNull(formatter);
 
         final Matcher matcher = PATTERN_DEFINITION_VARIANCE.matcher(line);
@@ -388,7 +388,7 @@ final class LineParser {
      * @return the text provided by the given group of the pattern, or
      *         {@code null} if not matching
      */
-    private String parseConstant(Pattern pattern, String value) {
+    private String constant(Pattern pattern, String value) {
         final Matcher matcher = pattern.matcher(line);
 
         if (matcher.find(position)) {
@@ -412,7 +412,7 @@ final class LineParser {
      * @throws ParseException
      *             if the parsing fails
      */
-    private Version requireVersion(String value) throws ParseException {
+    private Version version(String value) throws ParseException {
         try {
             return Version.valueOf(value);
         } catch (IllegalArgumentException e) {

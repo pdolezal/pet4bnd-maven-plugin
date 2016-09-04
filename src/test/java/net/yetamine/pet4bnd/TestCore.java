@@ -33,8 +33,7 @@ import net.yetamine.pet4bnd.format.Format2Map;
 import net.yetamine.pet4bnd.model.VersionResolver;
 import net.yetamine.pet4bnd.model.format.PetFormat;
 import net.yetamine.pet4bnd.model.format.PetParser;
-import net.yetamine.pet4bnd.testing.TestOutput;
-import net.yetamine.pet4bnd.testing.TestResources;
+import net.yetamine.pet4bnd.support.Resource;
 
 /**
  * Tests main parts of the tool using a set of input and output files.
@@ -69,24 +68,24 @@ public final class TestCore {
         Assert.assertEquals(new VersionResolver(pet).resolve().test(), resolvable);
 
         // Compare the bnd output
-        final byte[] bnd = TestResources.loadBytes(resourceSet + ".bnd");
+        final byte[] bnd = new Resource(resourceSet + ".bnd").toBytes();
         if (bnd != null) { // There is some output expected
             final Format2Bnd format2bnd = new Format2Bnd(pet, true).timestamp(null);
-            final byte[] persisted = TestOutput.toBytes(format2bnd);
+            final byte[] persisted = format2bnd.toBytes();
             Assert.assertEquals(persisted, bnd);
         }
 
         // Compare the properties output
-        final Properties properties = TestResources.loadProperties(resourceSet + ".properties");
+        final Properties properties = new Resource(resourceSet + ".properties").toProperties();
         if (properties != null) { // There is some output expected
             Assert.assertEquals(new Format2Map(pet).toProperties(), properties);
         }
 
         // Test restoring the versions
-        final byte[] restore = TestResources.loadBytes(resourceSet + ".pet+restore");
+        final byte[] restore = new Resource(resourceSet + ".pet+restore").toBytes();
         if (restore != null) { // There is some output expected
             pet.restore();
-            final byte[] persisted = TestOutput.toBytes(pet);
+            final byte[] persisted = pet.toBytes();
             Assert.assertEquals(persisted, restore);
         }
     }
@@ -97,7 +96,7 @@ public final class TestCore {
         final List<Object[]> result = new ArrayList<>();
 
         final Charset charset = StandardCharsets.UTF_8;
-        try (BufferedReader reader = TestResources.openBufferedReader("/test-core/test-cases", charset)) {
+        try (BufferedReader reader = new Resource("/test-core/test-cases").bufferedReader(charset)) {
             for (String line; (line = reader.readLine()) != null;) {
                 final String[] items = line.split("\\s*,\\s*");
 
@@ -134,7 +133,7 @@ public final class TestCore {
         final PetParser result = new PetParser();
         final String resourceName = resourceSet + ".pet";
         final Charset charset = StandardCharsets.UTF_8;
-        try (BufferedReader reader = TestResources.openBufferedReader(resourceName, charset)) {
+        try (BufferedReader reader = new Resource(resourceName).bufferedReader(charset)) {
             for (String line; (line = reader.readLine()) != null;) {
                 result.accept(line);
             }
