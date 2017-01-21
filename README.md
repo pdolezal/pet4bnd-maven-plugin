@@ -34,7 +34,7 @@ The package exports description for the *pet4bnd* can be found in the *exports.p
 $bundle: 1.2.0
 
 foo.bar: 1.1.0 < 2.0.0 @ minor
-+ provides:=true
++ provide:=true
 
 foo.baz: 1.1.1   @ major
 foo.boo: $bundle @ minor
@@ -133,7 +133,7 @@ This goal updates the version of the artifact recorded in the POM to the appropr
 
 ### Fixing the POM version for releases: `release` ###
 
-This goal updates the version of the artifact recorded in the POM file to the final artifact version as derived from the current change records. Before releasing an artifact, this step should take part, so that the released version is aligned with the required version number updates. However, it is suitable for the release branch only
+This goal updates the version of the artifact recorded in the POM file to the final artifact version as derived from the current change records. Before releasing an artifact, this step should take part, so that the released version is aligned with the required version number updates. However, it is suitable for the release branch only.
 
 
 ### Restoring the baseline: `restore` ###
