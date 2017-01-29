@@ -22,23 +22,26 @@ package net.yetamine.pet4bnd.demo.greeting;
 public final class Greeting {
 
     /**
+     * Prevents creating instances of this class.
+     */
+    private Greeting() {
+        throw new AssertionError();
+    }
+
+    /**
      * Returns a greeting from a list of arguments.
      *
      * @param args
-     *     the arguments to use. It must not be {@code null}.
+     *            the arguments to use. It must not be {@code null}.
      *
      * @return the greeting
      */
     public static String from(String... args) {
         final StringBuilder result = new StringBuilder();
-        for (int i = args.length; i-- > 0; ) {
+        for (int i = args.length; i-- > 0;) {
             result.append(args[i]);
         }
-        
+
         return result.toString();
-    }
-    
-    private Greeting() {
-        throw new AssertionError();
     }
 }

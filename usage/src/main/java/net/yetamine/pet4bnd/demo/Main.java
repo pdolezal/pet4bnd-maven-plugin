@@ -25,6 +25,13 @@ import net.yetamine.pet4bnd.demo.messages.Messages;
 public final class Main {
 
     /**
+     * Prevents creating instances of this class.
+     */
+    private Main() {
+        throw new AssertionError();
+    }
+
+    /**
      * Launches the application.
      *
      * @param args
@@ -32,9 +39,5 @@ public final class Main {
      */
     public static void main(String... args) {
         Messages.display(Greeting.from(args));
-    }
-    
-    private Main() {
-        throw new AssertionError();
     }
 }

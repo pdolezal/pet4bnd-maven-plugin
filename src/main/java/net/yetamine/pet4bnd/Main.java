@@ -66,6 +66,13 @@ public final class Main {
     private static final Path DEFAULT_SOURCE = Paths.get("exports.pet");
 
     /**
+     * Prevents creating instances of this class.
+     */
+    private Main() {
+        throw new AssertionError();
+    }
+
+    /**
      * Launches the command line version of the tool.
      *
      * @param args
@@ -365,9 +372,5 @@ public final class Main {
         } catch (NullPointerException | IOException e) {
             throw new AssertionError("Missing HELP resource.", e);
         }
-    }
-
-    private Main() {
-        throw new AssertionError();
     }
 }

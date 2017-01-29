@@ -22,16 +22,19 @@ package net.yetamine.pet4bnd.demo.messages;
 public final class Messages {
 
     /**
+     * Prevents creating instances of this class.
+     */
+    private Messages() {
+        throw new AssertionError();
+    }
+
+    /**
      * Displays a message.
      *
      * @param message
-     *     the message to display. It must not be {@code null}.
+     *            the message to display. It must not be {@code null}.
      */
     public static void display(String message) {
         System.out.println(message);
-    }
-    
-    private Messages() {
-        throw new AssertionError();
     }
 }
