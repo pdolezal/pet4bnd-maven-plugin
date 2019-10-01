@@ -2,6 +2,8 @@
 
 This repository contains the source for the *Package exports tracker for bnd*, or *pet4bnd* for short. As the name suggests, this tool helps with maintenance package exports when using the [bnd](http://bnd.bndtools.org/). It can be used as a standalone tool together with the *bnd* or as a Maven plugin together with the [Maven Bundle Plugin](http://felix.apache.org/components/bundle-plugin/index.html).
 
+Note that this tool has been mostly superseded by the defining the [OSGi versioning annotations](https://search.maven.org/search?q=a:org.osgi.annotation.versioning) and *bnd* updates and additional tools like [bnd-baseline-maven-plugin](https://github.com/bndtools/bnd/tree/master/maven/bnd-baseline-maven-plugin). For this reasons there are no plans to develop it further.
+
 
 ## Motivation ##
 
